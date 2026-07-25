@@ -1,0 +1,594 @@
+import 'dart:convert';
+import 'dart:io'; // Import for Platform check
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/constants/app_constants.dart';
+import '../../models/diagnosis_report.dart';
+import '../../models/forum_post.dart';
+import '../../models/shop_product.dart';
+
+class SupabaseService {
+  static final SupabaseService _instance = SupabaseService._internal();
+  factory SupabaseService() => _instance;
+  SupabaseService._internal();
+
+  bool _isInitialized = false;
+
+  bool get isConfigured => _isInitialized;
+
+  /// Initializes Supabase lazily and signs in anonymously
+  Future<void> init(String url, String anonKey) async {
+    if (url.isEmpty || anonKey.isEmpty) return;
+    try {
+      // If already initialized with different keys, we should re-initialize.
+      // But supabase_flutter doesn't support easy re-initialization directly without closing/resetting.
+      // We can use Supabase.initialize if not already initialized.
+      if (!_isInitialized) {
+        final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
+        await Supabase.initialize(
+          url: url,
+          anonKey: anonKey,
+          authOptions: FlutterAuthClientOptions(
+            autoRefreshToken: !isTesting,
+          ),
+        );
+        _isInitialized = true;
+        debugPrint("⚡ Supabase Service initialized successfully!");
+        
+        // Transparent anonymous sign-in to support authenticated storage upload RLS policies
+        try {
+          if (client.auth.currentSession == null) {
+            await client.auth.signInAnonymously();
+            debugPrint("👤 Authenticated anonymously in Supabase successfully!");
+          }
+        } catch (authError) {
+          debugPrint("⚠️ Supabase anonymous authentication skipped/failed: $authError");
+        }
+
+        // Auto-seed the database if it is empty to ensure maximum user-experience & premium completeness!
+        await seedDatabaseIfEmpty();
+      }
+    } catch (e) {
+      debugPrint("⚠️ Supabase initialization failed/skipped: $e");
+      // It might already be initialized. If so, we set _isInitialized to true.
+      if (e.toString().contains("has already been initialized")) {
+        _isInitialized = true;
+      }
+    }
+  }
+
+  SupabaseClient get client {
+    if (!_isInitialized) {
+      throw Exception("Supabase is not configured. Please add your credentials in Settings.");
+    }
+    return Supabase.instance.client;
+  }
+
+  /// Look up a disease report in Supabase (case-insensitive check)
+  Future<DiagnosisReport?> fetchDiseaseReport({
+    required String plantName,
+    required String diseaseName,
+    required String reportId,
+    required String imagePath,
+  }) async {
+    if (!_isInitialized) return null;
+
+    try {
+      final response = await client
+          .from('plant_diseases')
+          .select()
+          .ilike('plant_name', plantName.trim())
+          .ilike('disease_name', diseaseName.trim())
+          .maybeSingle();
+
+      if (response == null) {
+        debugPrint("🔍 Supabase cache miss for: $plantName - $diseaseName");
+        return null;
+      }
+
+      debugPrint("🔍 Supabase cache hit! Loading expert data for: $plantName - $diseaseName");
+      
+      // Convert columns from list/JSON dynamic to List<String>
+      final symptoms = List<String>.from(response['symptoms'] ?? []);
+      final treatment = List<String>.from(response['treatment'] ?? []);
+      final prevention = List<String>.from(response['prevention'] ?? []);
+
+      return DiagnosisReport(
+        id: reportId,
+        source: "Official Pathology Report",
+        plantName: response['plant_name'] ?? plantName,
+        diseaseName: response['disease_name'] ?? diseaseName,
+        confidence: response['confidence'] != null ? (response['confidence'] as num).toDouble() : 0.97,
+        severity: response['severity'] ?? "Moderate",
+        description: response['description'] ?? "",
+        symptoms: symptoms,
+        treatment: treatment,
+        prevention: prevention,
+        imagePath: imagePath,
+        dateTime: DateTime.now(),
+        isOfflineResult: false,
+      );
+    } catch (e) {
+      debugPrint("⚠️ Supabase lookup failed: $e");
+      return null;
+    }
+  }
+
+  /// Save a new disease report to Supabase for future use (caching)
+  Future<void> saveDiseaseReport(DiagnosisReport report) async {
+    if (!_isInitialized) return;
+
+    try {
+      // Upsert based on plant_name and disease_name unique index
+      await client.from('plant_diseases').upsert({
+        'plant_name': report.plantName.trim(),
+        'disease_name': report.diseaseName.trim(),
+        'severity': report.severity,
+        'description': report.description,
+        'symptoms': report.symptoms,
+        'treatment': report.treatment,
+        'prevention': report.prevention,
+      }, onConflict: 'plant_name, disease_name');
+      
+      debugPrint("💾 Successfully cached diagnosis to Supabase: ${report.plantName} - ${report.diseaseName}");
+    } catch (e) {
+      debugPrint("⚠️ Failed to cache report in Supabase: $e");
+    }
+  }
+
+  /// Seed database automatically with standard items from treatment_data.json if empty
+  Future<void> seedDatabaseIfEmpty() async {
+    if (!_isInitialized) return;
+
+    try {
+      // Check if table is empty
+      final countResponse = await client
+          .from('plant_diseases')
+          .select('id')
+          .limit(1);
+
+      if (countResponse.isNotEmpty) {
+        debugPrint("📚 Supabase plant database already seeded. Skipping initial seeding.");
+        return;
+      }
+
+      debugPrint("🚚 Seeding Supabase database with default plant disease templates from assets...");
+      final jsonString = await rootBundle.loadString(AppConstants.treatmentDataPath);
+      final Map<String, dynamic> dataMap = json.decode(jsonString);
+
+      final List<Map<String, dynamic>> recordsToInsert = [];
+      dataMap.forEach((key, val) {
+        recordsToInsert.add({
+          'plant_name': val['species'] ?? '',
+          'disease_name': val['name'] ?? '',
+          'severity': val['severity'] ?? 'Moderate',
+          'description': val['description'] ?? '',
+          'symptoms': List<String>.from(val['symptoms'] ?? []),
+          'treatment': List<String>.from(val['treatment'] ?? []),
+          'prevention': List<String>.from(val['prevention'] ?? []),
+        });
+      });
+
+      // Insert all records in bulk
+      if (recordsToInsert.isNotEmpty) {
+        await client.from('plant_diseases').insert(recordsToInsert);
+        debugPrint("🌱 Successfully seeded ${recordsToInsert.length} plant records into Supabase!");
+      }
+    } catch (e) {
+      debugPrint("⚠️ Supabase auto-seeding encountered an issue: $e");
+    }
+
+    // Seed the shop products table too
+    await seedShopProductsIfEmpty();
+  }
+
+  /// Fetch all forum posts with their comments and nested replies
+  Future<List<ForumPost>> fetchForumPosts() async {
+    if (!_isInitialized) return [];
+
+    try {
+      // Fetch all posts from Supabase (ordered by created_at descending)
+      final postsData = await client
+          .from('forum_posts')
+          .select()
+          .order('created_at', ascending: false);
+
+      // Fetch all comments from Supabase
+      final commentsData = await client
+          .from('forum_comments')
+          .select()
+          .order('created_at', ascending: true);
+
+      // Reconstruct Comments Hierarchy
+      final Map<String, ForumComment> commentMap = {};
+      final List<ForumComment> allComments = [];
+
+      for (var c in commentsData) {
+        final commentId = c['id'] as String;
+        final commentObj = ForumComment(
+          id: commentId,
+          authorName: c['author_name'] ?? 'Gardener',
+          authorTitle: c['author_title'] ?? 'Gardener',
+          isVerifiedExpert: c['is_verified_expert'] ?? false,
+          content: c['content'] ?? '',
+          dateTime: DateTime.tryParse(c['created_at'] ?? '') ?? DateTime.now(),
+          upvotes: c['upvotes'] ?? 0,
+          replies: [],
+        );
+        commentMap[commentId] = commentObj;
+        allComments.add(commentObj);
+      }
+
+      // Distribute comments to their parents (either replies or top-level comments of a post)
+      final Map<String, List<ForumComment>> postCommentsMap = {};
+
+      for (int i = 0; i < commentsData.length; i++) {
+        final cData = commentsData[i];
+        final commentObj = allComments[i];
+        final postId = cData['post_id'] as String;
+        final parentId = cData['parent_comment_id'] as String?;
+
+        if (parentId != null && commentMap.containsKey(parentId)) {
+          commentMap[parentId]!.replies.add(commentObj);
+        } else {
+          postCommentsMap.putIfAbsent(postId, () => []).add(commentObj);
+        }
+      }
+
+      // Reconstruct Post objects
+      final List<ForumPost> posts = [];
+      for (var p in postsData) {
+        final postId = p['id'] as String;
+        final tagsDynamic = p['tags'] ?? [];
+        final List<String> tags = List<String>.from(tagsDynamic);
+        final attachedImagesDynamic = p['attached_image_paths'] ?? [];
+        final List<String> attachedImages = List<String>.from(attachedImagesDynamic);
+
+        posts.add(ForumPost(
+          id: postId,
+          authorName: p['author_name'] ?? 'Gardener',
+          authorTitle: p['author_title'] ?? 'Gardener',
+          isVerifiedExpert: p['is_verified_expert'] ?? false,
+          category: p['category'] ?? 'General',
+          title: p['title'] ?? '',
+          content: p['content'] ?? '',
+          tags: tags,
+          upvotes: p['upvotes'] ?? 0,
+          comments: postCommentsMap[postId] ?? [],
+          attachedImagePaths: attachedImages,
+          diagnosisName: p['diagnosis_name'],
+          dateTime: DateTime.tryParse(p['created_at'] ?? '') ?? DateTime.now(),
+        ));
+      }
+
+      return posts;
+    } catch (e) {
+      debugPrint("⚠️ Failed to fetch forum posts from Supabase: $e");
+      return [];
+    }
+  }
+
+  /// Create a new forum post in Supabase
+  Future<void> createForumPost(ForumPost post) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_posts').insert({
+        'id': post.id,
+        'author_name': post.authorName,
+        'author_title': post.authorTitle,
+        'is_verified_expert': post.isVerifiedExpert,
+        'category': post.category,
+        'title': post.title,
+        'content': post.content,
+        'tags': post.tags,
+        'upvotes': post.upvotes,
+        'attached_image_paths': post.attachedImagePaths,
+        'diagnosis_name': post.diagnosisName,
+        'created_at': post.dateTime.toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint("⚠️ Failed to create forum post in Supabase: $e");
+    }
+  }
+
+  /// Create a new forum comment in Supabase
+  Future<void> createForumComment(String postId, String? parentCommentId, ForumComment comment) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_comments').insert({
+        'id': comment.id,
+        'post_id': postId,
+        'parent_comment_id': parentCommentId,
+        'author_name': comment.authorName,
+        'author_title': comment.authorTitle,
+        'is_verified_expert': comment.isVerifiedExpert,
+        'content': comment.content,
+        'upvotes': comment.upvotes,
+        'created_at': comment.dateTime.toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint("⚠️ Failed to create forum comment in Supabase: $e");
+    }
+  }
+
+  /// Fetch forum posts with pagination support
+  Future<List<ForumPost>> fetchForumPostsPaginated({int page = 0, int pageSize = 10}) async {
+    if (!_isInitialized) return [];
+    try {
+      final int from = page * pageSize;
+      final int to = from + pageSize - 1;
+
+      final postsData = await client
+          .from('forum_posts')
+          .select()
+          .order('created_at', ascending: false)
+          .range(from, to);
+
+      if (postsData.isEmpty) return [];
+
+      final List<String> postIds = postsData.map<String>((p) => p['id'] as String).toList();
+      final commentsData = await client
+          .from('forum_comments')
+          .select()
+          .inFilter('post_id', postIds)
+          .order('created_at', ascending: true);
+
+      final Map<String, ForumComment> commentMap = {};
+      final List<ForumComment> allComments = [];
+
+      for (var c in commentsData) {
+        final commentId = c['id'] as String;
+        final commentObj = ForumComment(
+          id: commentId,
+          authorName: c['author_name'] ?? 'Gardener',
+          authorTitle: c['author_title'] ?? 'Gardener',
+          isVerifiedExpert: c['is_verified_expert'] ?? false,
+          content: c['content'] ?? '',
+          dateTime: DateTime.tryParse(c['created_at'] ?? '') ?? DateTime.now(),
+          upvotes: c['upvotes'] ?? 0,
+          replies: [],
+        );
+        commentMap[commentId] = commentObj;
+        allComments.add(commentObj);
+      }
+
+      final Map<String, List<ForumComment>> postCommentsMap = {};
+      for (int i = 0; i < commentsData.length; i++) {
+        final cData = commentsData[i];
+        final commentObj = allComments[i];
+        final postId = cData['post_id'] as String;
+        final parentId = cData['parent_comment_id'] as String?;
+
+        if (parentId != null && commentMap.containsKey(parentId)) {
+          commentMap[parentId]!.replies.add(commentObj);
+        } else {
+          postCommentsMap.putIfAbsent(postId, () => []).add(commentObj);
+        }
+      }
+
+      final List<ForumPost> posts = [];
+      for (var p in postsData) {
+        final postId = p['id'] as String;
+        final List<String> tags = List<String>.from(p['tags'] ?? []);
+        final List<String> attachedImages = List<String>.from(p['attached_image_paths'] ?? []);
+
+        posts.add(ForumPost(
+          id: postId,
+          authorName: p['author_name'] ?? 'Gardener',
+          authorTitle: p['author_title'] ?? 'Gardener',
+          isVerifiedExpert: p['is_verified_expert'] ?? false,
+          category: p['category'] ?? 'General',
+          title: p['title'] ?? '',
+          content: p['content'] ?? '',
+          tags: tags,
+          upvotes: p['upvotes'] ?? 0,
+          comments: postCommentsMap[postId] ?? [],
+          attachedImagePaths: attachedImages,
+          diagnosisName: p['diagnosis_name'],
+          dateTime: DateTime.tryParse(p['created_at'] ?? '') ?? DateTime.now(),
+        ));
+      }
+
+      return posts;
+    } catch (e) {
+      debugPrint('⚠️ Failed to fetch paginated forum posts: $e');
+      return [];
+    }
+  }
+
+  /// Report a forum post for moderation
+  Future<void> reportForumPost({
+    required String postId,
+    required String reporterName,
+    required String reason,
+  }) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_reports').insert({
+        'post_id': postId,
+        'reporter_name': reporterName,
+        'reason': reason,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      debugPrint('🚩 Post reported: $postId by $reporterName');
+    } catch (e) {
+      debugPrint('⚠️ Failed to report post: $e');
+    }
+  }
+
+  /// Update a forum post's upvotes count
+  Future<void> updateForumPostUpvotes(String postId, int upvotes) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_posts').update({
+        'upvotes': upvotes,
+      }).eq('id', postId);
+    } catch (e) {
+      debugPrint("⚠️ Failed to update forum post upvotes in Supabase: $e");
+    }
+  }
+
+  /// Update a forum comment's upvotes count
+  Future<void> updateForumCommentUpvotes(String commentId, int upvotes) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_comments').update({
+        'upvotes': upvotes,
+      }).eq('id', commentId);
+    } catch (e) {
+      debugPrint("⚠️ Failed to update forum comment upvotes in Supabase: $e");
+    }
+  }
+
+  /// Sync user profile to Supabase user_profiles table.
+  /// Columns: id, username, avatar_url, role, gemini_api_key (admin only), joined_at, updated_at.
+  Future<void> syncUserProfile({
+    required String id,
+    required String username,
+    String avatarUrl = '',
+    String role = 'user',
+    String? geminiApiKey,
+    bool isNewUser = false,
+  }) async {
+    if (!_isInitialized) return;
+    try {
+      final Map<String, dynamic> data = {
+        'id': id,
+        'username': username,
+        'avatar_url': avatarUrl,
+        'role': role,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      };
+      if (isNewUser) {
+        data['joined_at'] = DateTime.now().toUtc().toIso8601String();
+      }
+      // Only admins can write gemini_api_key
+      if (role == 'admin' && geminiApiKey != null) {
+        data['gemini_api_key'] = geminiApiKey;
+      }
+      await client.from('user_profiles').upsert(
+        data,
+        onConflict: 'id',
+        ignoreDuplicates: false,
+      );
+      debugPrint("👤 Successfully synced user profile to Supabase: $username (role: $role)");
+    } catch (e) {
+      debugPrint("⚠️ Failed to sync user profile: $e");
+    }
+  }
+
+  /// Fetches the global Gemini API key stored by the admin in their profile.
+  /// Returns null if no admin has set a key yet.
+  Future<String?> fetchGlobalGeminiKey() async {
+    if (!_isInitialized) return null;
+    try {
+      final response = await client
+          .from('user_profiles')
+          .select('gemini_api_key')
+          .eq('role', 'admin')
+          .not('gemini_api_key', 'is', null)
+          .limit(1)
+          .maybeSingle();
+      final key = response?['gemini_api_key'] as String?;
+      if (key != null && key.isNotEmpty) {
+        debugPrint("🔑 Fetched global Gemini API key from admin profile.");
+        return key;
+      }
+      return null;
+    } catch (e) {
+      debugPrint("⚠️ Failed to fetch global Gemini key: $e");
+      return null;
+    }
+  }
+
+  /// Allows the admin user to update the global Gemini API key.
+  Future<bool> updateAdminGeminiKey(String userId, String newKey) async {
+    if (!_isInitialized) return false;
+    try {
+      await client
+          .from('user_profiles')
+          .update({
+            'gemini_api_key': newKey,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', userId)
+          .eq('role', 'admin');
+      debugPrint("✅ Admin Gemini API key updated successfully.");
+      return true;
+    } catch (e) {
+      debugPrint("⚠️ Failed to update admin Gemini key: $e");
+      return false;
+    }
+  }
+
+  // ── Shop & Affiliation Supabase APIs ────────────────────────────────
+
+  /// Fetches shop products dynamically from Supabase.
+  /// Falls back to local [ShopProduct.defaultProducts] on error or configuration miss.
+  Future<List<ShopProduct>> fetchShopProducts() async {
+    if (!_isInitialized) {
+      debugPrint("🔌 Supabase not configured. Using offline default products.");
+      return ShopProduct.defaultProducts;
+    }
+    try {
+      final response = await client
+          .from('shop_products')
+          .select()
+          .order('id', ascending: true);
+
+      if (response.isEmpty) {
+        debugPrint("🛍️ Supabase shop_products table is empty. Using defaults.");
+        return ShopProduct.defaultProducts;
+      }
+
+      final List<dynamic> list = response as List<dynamic>;
+      debugPrint("🛍️ Successfully loaded ${list.length} products from Supabase!");
+      return list.map((item) => ShopProduct.fromJson(item as Map<String, dynamic>)).toList();
+    } catch (e) {
+      debugPrint("⚠️ Supabase shop_products fetch failed (table might not exist): $e. Using local defaults.");
+      return ShopProduct.defaultProducts;
+    }
+  }
+
+  /// Seeds default products to Supabase shop_products table if it exists and is empty.
+  Future<void> seedShopProductsIfEmpty() async {
+    if (!_isInitialized) return;
+    try {
+      final countResponse = await client
+          .from('shop_products')
+          .select('id')
+          .limit(1);
+
+      if (countResponse.isNotEmpty) {
+        debugPrint("📚 Supabase shop catalog already seeded.");
+        return;
+      }
+
+      debugPrint("🚚 Seeding Supabase shop_products table with default catalog...");
+      final List<Map<String, dynamic>> records =
+          ShopProduct.defaultProducts.map((p) => p.toJson()).toList();
+
+      await client.from('shop_products').insert(records);
+      debugPrint("🌱 Successfully seeded ${records.length} shop products into Supabase!");
+    } catch (e) {
+      debugPrint("⚠️ Supabase shop catalog seeding failed/skipped (table might not exist): $e");
+    }
+  }
+
+  /// Logs an affiliate redirect click event to Supabase click analytics.
+  Future<void> logShopClick(String productId) async {
+    if (!_isInitialized) return;
+    try {
+      final userId = client.auth.currentUser?.id ?? 'anonymous';
+      await client.from('shop_clicks').insert({
+        'product_id': productId,
+        'user_id': userId,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      debugPrint("📊 Click logged for product: $productId by user: $userId");
+    } catch (e) {
+      debugPrint("⚠️ Click analytics logging failed/skipped (table might not exist): $e");
+    }
+  }
+}
