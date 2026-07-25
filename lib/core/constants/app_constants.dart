@@ -8,7 +8,7 @@ class AppConstants {
   static const String defaultSupabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'sb_publishable_w5MxUBgJjs9zFDcuGhYUHw_cjcZuiB8');
 
   // ── Gemini Configuration ────────────────────────────────
-  static const String defaultGeminiModel = 'gemini-2.5-flash';
+  static const String defaultGeminiModel = 'gemini-1.5-flash';
   static const String defaultGeminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: 'YOUR_GEMINI_API_KEY');
   
   // ── Shared Preferences Keys ──────────────────────────────

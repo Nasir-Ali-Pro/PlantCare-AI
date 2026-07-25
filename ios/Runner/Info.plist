@@ -4,12 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>PlantCare AI requires camera access to capture leaf images for on-device and cloud disease classification.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>PlantCare AI requires photo library access to pick saved leaf images for diagnosis.</string>
 	<key>CFBundleDisplayName</key>
-	<string>Plantcare App</string>
+	<string>Plantcare Ai</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -17,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>plantcare_app</string>
+	<string>plantcare_ai</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
