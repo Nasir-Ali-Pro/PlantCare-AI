@@ -98,6 +98,11 @@ class DiagnosisProvider extends ChangeNotifier {
       _supabaseUrl = prefs.getString(AppConstants.keySupabaseUrl) ?? AppConstants.defaultSupabaseUrl;
       _supabaseAnonKey = prefs.getString(AppConstants.keySupabaseAnonKey) ?? AppConstants.defaultSupabaseAnonKey;
 
+      if (_supabaseAnonKey == 'YOUR_SUPABASE_ANON_KEY' || _supabaseAnonKey.isEmpty) {
+        _supabaseAnonKey = AppConstants.defaultSupabaseAnonKey;
+        await prefs.setString(AppConstants.keySupabaseAnonKey, _supabaseAnonKey);
+      }
+
       if (_supabaseUrl.isNotEmpty && _supabaseAnonKey.isNotEmpty) {
         await SupabaseService().init(_supabaseUrl, _supabaseAnonKey);
         

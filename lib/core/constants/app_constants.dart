@@ -5,7 +5,7 @@ class AppConstants {
   // ── Supabase Configuration ────────────────────────────────
   // These placeholders serve as fallbacks if the user has not configured their own in Settings
   static const String defaultSupabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://ljvsigniwvpbmhhxphen.supabase.co');
-  static const String defaultSupabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'YOUR_SUPABASE_ANON_KEY');
+  static const String defaultSupabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'sb_publishable_w5MxUBgJjs9zFDcuGhYUHw_cjcZuiB8');
 
   // ── Gemini Configuration ────────────────────────────────
   static const String defaultGeminiModel = 'gemini-2.5-flash';
