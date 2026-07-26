@@ -565,7 +565,57 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            if (needyPlants.isEmpty)
+            if (provider.plants.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.10),
+                      AppColors.surfaceHighlight.withValues(alpha: 0.3),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.grass_rounded, color: AppColors.primaryLight, size: 24),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'No Plants in Garden',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Add your first plant to start tracking daily watering and fertilizing schedules.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceMuted,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            else if (needyPlants.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
@@ -604,9 +654,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'All plants are currently watered and fertilized.',
-                      style: TextStyle(
+                    Text(
+                      'All ${provider.plants.length} plant${provider.plants.length == 1 ? "" : "s"} are currently watered and fertilized.',
+                      style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.onSurfaceMuted,
                       ),
