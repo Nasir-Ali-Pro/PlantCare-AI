@@ -122,6 +122,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                               padding: const EdgeInsets.all(12.0),
                               child: CachedNetworkImage(
                                 imageUrl: product.imageUrl,
+                                httpHeaders: ShopProduct.amazonImageHeaders,
                                 fit: BoxFit.contain,
                                 placeholder: (context, url) => Shimmer.fromColors(
                                   enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
@@ -129,13 +130,16 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                                   highlightColor: AppColors.borderLight,
                                   child: Container(color: AppColors.backgroundLight),
                                 ),
-                                errorWidget: (context, url, error) => const Center(
-                                  child: Icon(
-                                    Icons.local_florist_rounded,
-                                    color: AppColors.primary,
-                                    size: 60,
-                                  ),
-                                ),
+                                errorWidget: (context, url, error) {
+                                  debugPrint('🖼️ Image load FAILED → $url\nError: $error');
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.local_florist_rounded,
+                                      color: AppColors.primary,
+                                      size: 60,
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ),
@@ -247,7 +251,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(Icons.info_outline_rounded, color: AppColors.accent, size: 18),
-                            const SizedBox(width: 10),
+                            SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 'As an Amazon Associate, we earn a commission on qualifying purchases made through our referral links. This helps support the maintenance of PlantCare AI.',
@@ -511,6 +515,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                         padding: const EdgeInsets.all(8.0),
                         child: CachedNetworkImage(
                           imageUrl: product.imageUrl,
+                          httpHeaders: ShopProduct.amazonImageHeaders,
                           fit: BoxFit.contain,
                           placeholder: (context, url) => Shimmer.fromColors(
                             enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
@@ -518,13 +523,16 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                             highlightColor: AppColors.borderLight,
                             child: Container(color: AppColors.backgroundLight),
                           ),
-                          errorWidget: (context, url, error) => const Center(
-                            child: Icon(
-                              Icons.local_florist_rounded,
-                              color: AppColors.primary,
-                              size: 40,
-                            ),
-                          ),
+                          errorWidget: (context, url, error) {
+                            debugPrint('🖼️ Grid image FAILED → $url\nError: $error');
+                            return const Center(
+                              child: Icon(
+                                Icons.local_florist_rounded,
+                                color: AppColors.primary,
+                                size: 40,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),

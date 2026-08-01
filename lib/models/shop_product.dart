@@ -21,6 +21,18 @@ class ShopProduct {
     required this.category,
   });
 
+  /// HTTP headers that must accompany every Amazon CDN image request.
+  /// Amazon's CloudFront checks the Referer header — without it the CDN
+  /// returns 403 Forbidden.  Provide a browser User-Agent so that the CDN
+  /// treats the request as a legitimate web browser fetching the image on
+  /// behalf of amazon.com.
+  static const Map<String, String> amazonImageHeaders = {
+    'Referer': 'https://www.amazon.com/',
+    'User-Agent':
+        'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/120.0.6099.130 Mobile Safari/537.36',
+  };
+
   /// Generates the standard Amazon affiliate redirect link with tag 83847-20
   String get affiliateUrl => 'https://www.amazon.com/dp/$asin?tag=83847-20';
 
@@ -76,13 +88,7 @@ class ShopProduct {
     );
   }
 
-  /// Wraps an Amazon CDN URL through the wsrv.nl image proxy so that
-  /// the real product photo is served without hotlink-protection 403 errors.
-  static String _proxy(String amazonImageId) =>
-      'https://wsrv.nl/?url=m.media-amazon.com/images/I/$amazonImageId'
-      '&w=400&output=webp&q=85';
-
-  static final List<ShopProduct> defaultProducts = [
+  static const List<ShopProduct> defaultProducts = [
     // ── Pest & Disease Control ─────────────────────────────────
     ShopProduct(
       id: 'prod_neem_oil',
@@ -92,7 +98,7 @@ class ShopProduct {
       price: '\$14.99',
       rating: 4.6,
       reviewCount: 3420,
-      imageUrl: _proxy('71Z5oBB9jYL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/71Z5oBB9jYL._AC_SX679_.jpg',
       asin: 'B004QAWGIO',
       category: 'Pest & Disease Control',
     ),
@@ -104,7 +110,7 @@ class ShopProduct {
       price: '\$11.95',
       rating: 4.7,
       reviewCount: 1890,
-      imageUrl: _proxy('71hb8WfCpCL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/71hb8WfCpCL._AC_SX679_.jpg',
       asin: 'B000BX1HKI',
       category: 'Pest & Disease Control',
     ),
@@ -116,7 +122,7 @@ class ShopProduct {
       price: '\$16.97',
       rating: 4.5,
       reviewCount: 2870,
-      imageUrl: _proxy('71O2tPLJMGL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/71O2tPLJMGL._AC_SX679_.jpg',
       asin: 'B000BQKRSS',
       category: 'Pest & Disease Control',
     ),
@@ -130,7 +136,7 @@ class ShopProduct {
       price: '\$8.49',
       rating: 4.8,
       reviewCount: 82500,
-      imageUrl: _proxy('81BUiZH5yjL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/81BUiZH5yjL._AC_SX679_.jpg',
       asin: 'B000F6XGZ0',
       category: 'Fertilizers & Soil',
     ),
@@ -142,7 +148,7 @@ class ShopProduct {
       price: '\$12.99',
       rating: 4.5,
       reviewCount: 4210,
-      imageUrl: _proxy('81Y-JOCQxiL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/81Y-JOCQxiL._AC_SX679_.jpg',
       asin: 'B002Y08J3E',
       category: 'Fertilizers & Soil',
     ),
@@ -154,7 +160,7 @@ class ShopProduct {
       price: '\$9.95',
       rating: 4.6,
       reviewCount: 3150,
-      imageUrl: _proxy('71lUNxdRQwL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/71lUNxdRQwL._AC_SX679_.jpg',
       asin: 'B08HM3DWG3',
       category: 'Fertilizers & Soil',
     ),
@@ -168,7 +174,7 @@ class ShopProduct {
       price: '\$13.58',
       rating: 4.8,
       reviewCount: 15400,
-      imageUrl: _proxy('71hwbM3P96L._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/71hwbM3P96L._AC_SX679_.jpg',
       asin: 'B01MU8CP1W',
       category: 'Gardening Tools',
     ),
@@ -180,7 +186,7 @@ class ShopProduct {
       price: '\$8.99',
       rating: 4.8,
       reviewCount: 3820,
-      imageUrl: _proxy('61WJvqITUkL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/61WJvqITUkL._AC_SX679_.jpg',
       asin: 'B00002N5HG',
       category: 'Gardening Tools',
     ),
@@ -192,7 +198,7 @@ class ShopProduct {
       price: '\$13.99',
       rating: 4.5,
       reviewCount: 8650,
-      imageUrl: _proxy('71yMjmjv2BL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/71yMjmjv2BL._AC_SX679_.jpg',
       asin: 'B07GVDB7V1',
       category: 'Gardening Tools',
     ),
@@ -206,7 +212,7 @@ class ShopProduct {
       price: '\$10.99',
       rating: 4.5,
       reviewCount: 47800,
-      imageUrl: _proxy('61dn5mfHuaL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/61dn5mfHuaL._AC_SX679_.jpg',
       asin: 'B00FJFLJMS',
       category: 'Watering Equipment',
     ),
@@ -218,8 +224,7 @@ class ShopProduct {
       price: '\$19.99',
       rating: 4.6,
       reviewCount: 5280,
-      // Note: original Amazon ID contained "+" which must be percent-encoded for the proxy URL
-      imageUrl: _proxy('61N1hE%2B6xfL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/61N1hE+6xfL._AC_SX679_.jpg',
       asin: 'B07NJ5P7XJ',
       category: 'Watering Equipment',
     ),
@@ -233,7 +238,7 @@ class ShopProduct {
       price: '\$29.99',
       rating: 4.7,
       reviewCount: 2840,
-      imageUrl: _proxy('61nIaHdmMqL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/61nIaHdmMqL._AC_SX679_.jpg',
       asin: 'B01LXQPJVL',
       category: 'Pots & Containers',
     ),
@@ -245,7 +250,7 @@ class ShopProduct {
       price: '\$21.99',
       rating: 4.7,
       reviewCount: 1840,
-      imageUrl: _proxy('719eVR1VPIL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/719eVR1VPIL._AC_SX679_.jpg',
       asin: 'B07BRCPNZX',
       category: 'Pots & Containers',
     ),
@@ -259,7 +264,7 @@ class ShopProduct {
       price: '\$17.99',
       rating: 4.7,
       reviewCount: 4700,
-      imageUrl: _proxy('51S4VJVdVWL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/51S4VJVdVWL._AC_SX679_.jpg',
       asin: 'B07BRKT56T',
       category: 'Indoor Growing',
     ),
@@ -271,7 +276,7 @@ class ShopProduct {
       price: '\$22.99',
       rating: 4.6,
       reviewCount: 3280,
-      imageUrl: _proxy('61N9v3wZ4RL._AC_SX679_.jpg'),
+      imageUrl: 'https://m.media-amazon.com/images/I/61N9v3wZ4RL._AC_SX679_.jpg',
       asin: 'B07WFPWFMR',
       category: 'Indoor Growing',
     ),
