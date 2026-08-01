@@ -22,7 +22,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUploading = false;
 
-  Future<void> _pickAndUploadAvatar(BuildContext context, GardenProvider provider) async {
+  Future<void> _pickAndUploadAvatar(
+    BuildContext context,
+    GardenProvider provider,
+  ) async {
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -34,13 +37,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Wrap(
             children: <Widget>[
               ListTile(
-                leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
-                title: const Text('Photo Gallery', style: TextStyle(color: AppColors.onSurface)),
+                leading: const Icon(
+                  Icons.photo_library_rounded,
+                  color: AppColors.primary,
+                ),
+                title: const Text(
+                  'Photo Gallery',
+                  style: TextStyle(color: AppColors.onSurface),
+                ),
                 onTap: () => Navigator.of(context).pop(ImageSource.gallery),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
-                title: const Text('Camera', style: TextStyle(color: AppColors.onSurface)),
+                leading: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: AppColors.primary,
+                ),
+                title: const Text(
+                  'Camera',
+                  style: TextStyle(color: AppColors.onSurface),
+                ),
                 onTap: () => Navigator.of(context).pop(ImageSource.camera),
               ),
             ],
@@ -98,7 +113,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to upload image, fell back to local save: $e'),
+            content: Text(
+              'Failed to upload image, fell back to local save: $e',
+            ),
             backgroundColor: AppTheme.dangerRed,
           ),
         );
@@ -114,8 +131,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String _formatJoinDate(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return 'Joined ${months[date.month - 1]} ${date.year}';
   }
@@ -145,9 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.darkBgGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkBgGradient),
         child: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -212,15 +237,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.emoji_events_rounded, color: AppTheme.accentAmber, size: 22),
+              const Icon(
+                Icons.emoji_events_rounded,
+                color: AppTheme.accentAmber,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Achievements & badges',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                      color: Colors.white,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
@@ -232,12 +261,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: streak > 0
-                    ? [const Color(0xFFF97316).withValues(alpha: 0.15), const Color(0xFFEAB308).withValues(alpha: 0.15)]
-                    : [Colors.white.withValues(alpha: 0.03), Colors.white.withValues(alpha: 0.03)],
+                    ? [
+                        const Color(0xFFF97316).withValues(alpha: 0.15),
+                        const Color(0xFFEAB308).withValues(alpha: 0.15),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.03),
+                        Colors.white.withValues(alpha: 0.03),
+                      ],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: streak > 0 ? const Color(0xFFF97316).withValues(alpha: 0.4) : Colors.white12,
+                color: streak > 0
+                    ? const Color(0xFFF97316).withValues(alpha: 0.4)
+                    : Colors.white12,
                 width: 1,
               ),
             ),
@@ -252,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const Shadow(
                               color: Color(0xFFF97316),
                               blurRadius: 8,
-                            )
+                            ),
                           ]
                         : null,
                   ),
@@ -263,9 +300,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        streak > 0 ? '$streak-Day Care Streak!' : 'No Active Streak',
+                        streak > 0
+                            ? '$streak-Day Care Streak!'
+                            : 'No Active Streak',
                         style: TextStyle(
-                          color: streak > 0 ? const Color(0xFFF97316) : Colors.white70,
+                          color: streak > 0
+                              ? const Color(0xFFF97316)
+                              : Colors.white70,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -275,7 +316,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         streak > 0
                             ? 'You are actively caring for your garden. Keep it up!'
                             : 'Perform care tasks daily to build your gardening streak.',
-                        style: const TextStyle(color: Colors.white38, fontSize: 11),
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
@@ -304,13 +348,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isUnlocked 
-                      ? AppColors.primary.withValues(alpha: 0.06) 
+                  color: isUnlocked
+                      ? AppColors.primary.withValues(alpha: 0.06)
                       : Colors.white.withValues(alpha: 0.02),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: isUnlocked 
-                        ? AppColors.primary.withValues(alpha: 0.3) 
+                    color: isUnlocked
+                        ? AppColors.primary.withValues(alpha: 0.3)
                         : Colors.white.withValues(alpha: 0.05),
                     width: 1.2,
                   ),
@@ -322,8 +366,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isUnlocked 
-                            ? AppColors.primary.withValues(alpha: 0.15) 
+                        color: isUnlocked
+                            ? AppColors.primary.withValues(alpha: 0.15)
                             : Colors.white.withValues(alpha: 0.04),
                       ),
                       child: Icon(
@@ -371,7 +415,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           GestureDetector(
-            onTap: provider.isGuest ? null : () => _pickAndUploadAvatar(context, provider),
+            onTap: provider.isGuest
+                ? null
+                : () => _pickAndUploadAvatar(context, provider),
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -389,8 +435,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     backgroundColor: AppTheme.bgDarkEnd,
                     backgroundImage: provider.avatarUrl.isNotEmpty
                         ? (provider.avatarUrl.startsWith('data:')
-                            ? MemoryImage(base64Decode(provider.avatarUrl.split(',').last)) as ImageProvider
-                            : CachedNetworkImageProvider(provider.avatarUrl) as ImageProvider)
+                              ? MemoryImage(
+                                      base64Decode(
+                                        provider.avatarUrl.split(',').last,
+                                      ),
+                                    )
+                                    as ImageProvider
+                              : CachedNetworkImageProvider(provider.avatarUrl)
+                                    as ImageProvider)
                         : null,
                     child: provider.avatarUrl.isNotEmpty
                         ? null
@@ -398,14 +450,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
-                                colors: [AppTheme.primaryGreen, Color(0xFF047857)],
+                                colors: [
+                                  AppTheme.primaryGreen,
+                                  Color(0xFF047857),
+                                ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                             ),
                             child: Center(
                               child: Text(
-                                provider.username.isNotEmpty ? provider.username[0].toUpperCase() : 'G',
+                                provider.username.isNotEmpty
+                                    ? provider.username[0].toUpperCase()
+                                    : 'G',
                                 style: const TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.bold,
@@ -458,9 +515,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   provider.username,
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -503,7 +560,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.star_rounded, color: AppTheme.accentAmber, size: 24),
+              const Icon(
+                Icons.star_rounded,
+                color: AppTheme.accentAmber,
+                size: 24,
+              ),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
@@ -554,11 +615,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Botanical Statistics widget
-  Widget _buildStatsCard(BuildContext context, GardenProvider garden, DiagnosisProvider diagnosis) {
+  Widget _buildStatsCard(
+    BuildContext context,
+    GardenProvider garden,
+    DiagnosisProvider diagnosis,
+  ) {
     // Calculate average health of plants
     double avgHealth = 0.0;
     if (garden.plants.isNotEmpty) {
-      final totalHealth = garden.plants.fold<double>(0, (sum, plant) => sum + (plant.healthScore / 100.0));
+      final totalHealth = garden.plants.fold<double>(
+        0,
+        (sum, plant) => sum + (plant.healthScore / 100.0),
+      );
       avgHealth = totalHealth / garden.plants.length;
     }
 
@@ -573,20 +641,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.analytics_rounded, color: AppTheme.primaryGreen, size: 22),
+              const Icon(
+                Icons.analytics_rounded,
+                color: AppTheme.primaryGreen,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Botanical statistics',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                      color: Colors.white,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
           const Divider(color: Colors.white10, height: 28),
-          
+
           // Stats Row 1
           Row(
             children: [
@@ -603,8 +675,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: _buildStatItem(
                   context: context,
                   icon: Icons.health_and_safety_rounded,
-                  color: avgHealth >= 0.8 ? AppTheme.primaryGreen : (avgHealth >= 0.5 ? AppTheme.accentAmber : AppTheme.dangerRed),
-                  value: garden.plants.isEmpty ? 'N/A' : '${(avgHealth * 100).toInt()}%',
+                  color: avgHealth >= 0.8
+                      ? AppTheme.primaryGreen
+                      : (avgHealth >= 0.5
+                            ? AppTheme.accentAmber
+                            : AppTheme.dangerRed),
+                  value: garden.plants.isEmpty
+                      ? 'N/A'
+                      : '${(avgHealth * 100).toInt()}%',
                   label: 'Avg Garden Health',
                 ),
               ),
@@ -619,7 +697,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: _buildStatItem(
                   context: context,
                   icon: Icons.water_drop_rounded,
-                  color: thirstyCount > 0 ? AppTheme.accentAmber : AppTheme.primaryGreen,
+                  color: thirstyCount > 0
+                      ? AppTheme.accentAmber
+                      : AppTheme.primaryGreen,
                   value: '$thirstyCount',
                   label: 'Thirsty Plants',
                 ),
@@ -674,10 +754,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white38,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -706,21 +783,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.settings_suggest_rounded, color: AppTheme.primaryGreen, size: 22),
+              const Icon(
+                Icons.settings_suggest_rounded,
+                color: AppTheme.primaryGreen,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Configuration & utilities',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                      color: Colors.white,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
           const Divider(color: Colors.white10, height: 28),
 
-                    // Gemini Key row
+          // Gemini Key row
           if (Provider.of<GardenProvider>(context).isAdmin) ...[
             Row(
               children: [
@@ -730,7 +811,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Colors.white.withValues(alpha: 0.04),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.vpn_key_rounded, color: Colors.blueAccent, size: 18),
+                  child: const Icon(
+                    Icons.vpn_key_rounded,
+                    color: Colors.blueAccent,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -739,12 +824,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       const Text(
                         'Gemini AI API Key',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                        ),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         maskedKey,
-                        style: const TextStyle(color: Colors.white38, fontSize: 11.5),
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 11.5,
+                        ),
                       ),
                     ],
                   ),
@@ -753,9 +845,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () => _showApiKeyModal(context, provider),
                   style: TextButton.styleFrom(
                     foregroundColor: AppTheme.primaryGreen,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                   ),
-                  child: const Text('Manage', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  child: const Text(
+                    'Manage',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
                 ),
               ],
             ),
@@ -771,7 +869,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: Colors.white.withValues(alpha: 0.04),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.delete_sweep_rounded, color: AppTheme.dangerRed, size: 18),
+                child: const Icon(
+                  Icons.delete_sweep_rounded,
+                  color: AppTheme.dangerRed,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -780,12 +882,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     const Text(
                       'Clear Diagnostic Cache',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       'Removes all ${provider.history.length} saved diagnostic records',
-                      style: const TextStyle(color: Colors.white38, fontSize: 11.5),
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 11.5,
+                      ),
                     ),
                   ],
                 ),
@@ -794,9 +903,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () => _showClearHistoryConfirm(context, provider),
                 style: TextButton.styleFrom(
                   foregroundColor: AppTheme.dangerRed,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                 ),
-                child: const Text('Clear', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                child: const Text(
+                  'Clear',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
               ),
             ],
           ),
@@ -840,7 +955,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const Divider(color: AppColors.border, height: 28),
           const Text(
-            'Designed for plant enthusiasts and caretakers. Powered by Gemini Cloud AI.',
+            'Your Smart Plant Doctor.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.onSurfaceMuted,
@@ -854,22 +969,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showClearHistoryConfirm(BuildContext context, DiagnosisProvider provider) {
+  void _showClearHistoryConfirm(
+    BuildContext context,
+    DiagnosisProvider provider,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: AppTheme.bgDarkStart,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Text('Clear Diagnostics Cache? 🧹'),
           content: const Text(
             'This action will permanently delete all saved diagnosis reports from your local database. This cannot be undone.',
-            style: TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.45),
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13.5,
+              height: 1.45,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white38)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white38),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -884,9 +1011,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.dangerRed,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Delete All', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Delete All',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -925,7 +1060,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded, color: Colors.white60),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white60,
+                      ),
                     ),
                   ],
                 ),
@@ -938,14 +1076,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: InputDecoration(
                     labelText: 'Gardener Name',
                     labelStyle: const TextStyle(color: Colors.white38),
-                    prefixIcon: const Icon(Icons.person_rounded, color: AppTheme.primaryGreen),
+                    prefixIcon: const Icon(
+                      Icons.person_rounded,
+                      color: AppTheme.primaryGreen,
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: const BorderSide(color: Colors.white24),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryGreen,
+                        width: 2,
+                      ),
                     ),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.04),
@@ -988,8 +1132,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showApiKeyModal(BuildContext context, DiagnosisProvider diagnosisProvider) {
-    final textController = TextEditingController(text: diagnosisProvider.geminiApiKey);
+  void _showApiKeyModal(
+    BuildContext context,
+    DiagnosisProvider diagnosisProvider,
+  ) {
+    final textController = TextEditingController(
+      text: diagnosisProvider.geminiApiKey,
+    );
     final gardenProvider = Provider.of<GardenProvider>(context, listen: false);
     bool isSaving = false;
 
@@ -1006,7 +1155,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: AppCard(
                 borderRadius: 30,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 30,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1016,7 +1168,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.vpn_key_rounded, color: Colors.blueAccent, size: 20),
+                            Icon(
+                              Icons.vpn_key_rounded,
+                              color: Colors.blueAccent,
+                              size: 20,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Global Gemini API Key',
@@ -1030,14 +1186,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(sheetContext),
-                          icon: const Icon(Icons.close_rounded, color: Colors.white60),
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white60,
+                          ),
                         ),
                       ],
                     ),
                     const Divider(color: Colors.white12, height: 16),
                     const Text(
                       'This key is stored in Supabase and used by all app users. Keep it secure.',
-                      style: TextStyle(color: Colors.white38, fontSize: 12, height: 1.5),
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -1047,14 +1210,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: InputDecoration(
                         labelText: 'API Key (starts with AIza...)',
                         labelStyle: const TextStyle(color: Colors.white38),
-                        prefixIcon: const Icon(Icons.vpn_key_rounded, color: AppTheme.primaryGreen),
+                        prefixIcon: const Icon(
+                          Icons.vpn_key_rounded,
+                          color: AppTheme.primaryGreen,
+                        ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: const BorderSide(color: Colors.white24),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+                          borderSide: const BorderSide(
+                            color: AppTheme.primaryGreen,
+                            width: 2,
+                          ),
                         ),
                         filled: true,
                         fillColor: Colors.white.withValues(alpha: 0.04),
@@ -1074,7 +1243,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               await diagnosisProvider.setGeminiApiKey(key);
 
                               // 2. Push to Supabase admin row (via GardenProvider)
-                              final success = await gardenProvider.updateAdminGeminiKey(key);
+                              final success = await gardenProvider
+                                  .updateAdminGeminiKey(key);
 
                               if (sheetContext.mounted) {
                                 Navigator.pop(sheetContext);
@@ -1087,7 +1257,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ? '✅ Gemini API key saved globally to Supabase.'
                                           : '⚠️ Key saved locally. Supabase sync failed — check connection.',
                                     ),
-                                    backgroundColor: success ? AppTheme.primaryGreen : Colors.orange,
+                                    backgroundColor: success
+                                        ? AppTheme.primaryGreen
+                                        : Colors.orange,
                                     duration: const Duration(seconds: 3),
                                   ),
                                 );
@@ -1113,7 +1285,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             )
                           : const Text(
                               'Save & Sync to Supabase',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                     ),
                   ],

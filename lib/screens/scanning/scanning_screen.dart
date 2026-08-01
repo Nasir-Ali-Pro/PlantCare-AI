@@ -153,38 +153,21 @@ class _ScanningScreenState extends State<ScanningScreen> {
                             final bool isNotPlantError = error.toLowerCase().contains("not a plant") || error.contains("NOT_A_PLANT") || error.toLowerCase().contains("does not appear to be a plant");
                             if (isNotPlantError) {
                               return AppCard(
-                                borderRadius: 24,
+                                borderRadius: 20,
                                 color: AppColors.surfaceElevated,
-                                borderColor: AppColors.warning.withValues(alpha: 0.3),
+                                borderColor: AppColors.border,
                                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                                child: Column(
+                                child: const Row(
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.warning.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.park_outlined, color: AppColors.warning, size: 42),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      'Not a Plant Leaf 🍃',
-                                      style: TextStyle(
-                                        color: AppColors.warning,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    const Text(
-                                      "The uploaded picture is not a plant, and I cannot assist you. PlantCare AI is dedicated specifically to plant health diagnostics and botanical care.",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: AppColors.onSurface,
-                                        fontSize: 14.5,
-                                        height: 1.5,
+                                    Icon(Icons.park_outlined, color: AppColors.warning, size: 28),
+                                    SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        'Please upload a valid plant leaf image.',
+                                        style: TextStyle(
+                                          color: AppColors.onSurface,
+                                          fontSize: 15,
+                                        ),
                                       ),
                                     ),
                                   ],

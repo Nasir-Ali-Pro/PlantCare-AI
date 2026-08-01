@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/garden_provider.dart';
+import '../../models/shop_product.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -21,9 +22,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final List<String> _quickPrompts = [
     "Why are my plant leaves turning yellow?",
-    "How often should I water my indoor plants?",
-    "Is a Tomato plant safe for cats and dogs?",
-    "What organic fertilizer is best for early blight?"
+    "How often should I water my succulents?",
+    "What are signs of root rot in houseplants?",
+    "Best organic fertilizer for tomato plants?",
   ];
 
   @override
@@ -70,13 +71,51 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('AI Care Assistant', style: TextStyle(color: AppColors.onSurface, fontWeight: FontWeight.bold)),
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.15),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+              ),
+              child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 18),
+            ),
+            const SizedBox(width: 10),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI Care Assistant',
+                  style: TextStyle(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  'Plants & Gardening Expert',
+                  style: TextStyle(
+                    color: AppColors.onSurfaceMuted,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
         actions: [
           IconButton(
+            tooltip: 'Clear chat',
             onPressed: () {
               Provider.of<ChatProvider>(context, listen: false).clearChat();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Conversation cleared!'), backgroundColor: AppColors.surfaceElevated),
+                const SnackBar(
+                  content: Text('Conversation cleared!'),
+                  backgroundColor: AppColors.surfaceElevated,
+                ),
               );
             },
             icon: const Icon(Icons.cleaning_services_rounded, color: AppColors.onSurfaceMuted),
@@ -90,19 +129,20 @@ class _ChatScreenState extends State<ChatScreen> {
 
             return Column(
               children: [
+                // Active consultation context banner
                 if (chatProvider.activeConsultationReport != null) ...[
                   Container(
-                    margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
+                      color: AppColors.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.medical_services_outlined, color: AppColors.primary, size: 20),
-                        const SizedBox(width: 12),
+                        const Icon(Icons.medical_services_outlined, color: AppColors.primary, size: 18),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,16 +152,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                 style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                  letterSpacing: 0.5,
+                                  fontSize: 10,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
-                              const SizedBox(height: 2),
                               Text(
                                 "${chatProvider.activeConsultationReport!.plantName} • ${chatProvider.activeConsultationReport!.diseaseName}",
                                 style: const TextStyle(
                                   color: AppColors.onSurface,
-                                  fontSize: 13,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.w500,
                                 ),
                                 maxLines: 1,
@@ -134,21 +173,20 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           icon: const Icon(Icons.close_rounded, color: AppColors.onSurfaceMuted, size: 18),
-                          onPressed: () {
-                            chatProvider.clearConsultation();
-                          },
+                          onPressed: () => chatProvider.clearConsultation(),
                         ),
                       ],
                     ),
                   ),
                 ],
+
                 // Messages List
                 Expanded(
                   child: chatProvider.messages.isEmpty
                       ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                       : ListView.builder(
                           controller: _scrollController,
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           itemCount: chatProvider.messages.length,
                           itemBuilder: (context, index) {
                             final message = chatProvider.messages[index];
@@ -163,28 +201,38 @@ class _ChatScreenState extends State<ChatScreen> {
                 // Typing indicator
                 if (chatProvider.isTyping) ...[
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 14),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(18),
+                              topRight: Radius.circular(18),
+                              bottomRight: Radius.circular(18),
+                            ),
                             border: Border.all(color: AppColors.border),
                           ),
-                          child: const Row(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                "AI Care Assistant is typing...",
-                                style: TextStyle(color: AppColors.onSurfaceMuted, fontSize: 12),
-                              ),
+                              _buildTypingDot(0),
+                              const SizedBox(width: 4),
+                              _buildTypingDot(150),
+                              const SizedBox(width: 4),
+                              _buildTypingDot(300),
                             ],
                           ),
                         ),
@@ -193,13 +241,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ],
 
-                // Quick Action Suggestion Prompts
+                // Quick Prompt Chips
                 if (chatProvider.messages.length <= 1 && !chatProvider.isTyping) ...[
                   SizedBox(
-                    height: 48,
+                    height: 40,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _quickPrompts.length,
                       itemBuilder: (context, index) {
                         final prompt = _quickPrompts[index];
@@ -208,7 +256,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           child: ActionChip(
                             label: Text(
                               prompt,
-                              style: const TextStyle(color: AppColors.onSurface, fontSize: 12),
+                              style: const TextStyle(color: AppColors.onSurface, fontSize: 11.5),
                             ),
                             backgroundColor: AppColors.surface,
                             shape: RoundedRectangleBorder(
@@ -221,48 +269,57 @@ class _ChatScreenState extends State<ChatScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                 ],
 
-                // Message Box Input
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
+                // Message Input Box
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    border: Border(
+                      top: BorderSide(color: AppColors.border.withValues(alpha: 0.5), width: 0.5),
+                    ),
+                  ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Expanded(
                         child: TextField(
                           controller: _messageController,
                           style: const TextStyle(color: AppColors.onSurface, fontSize: 14),
-                          maxLines: null,
+                          maxLines: 4,
+                          minLines: 1,
+                          textInputAction: TextInputAction.newline,
                           decoration: InputDecoration(
-                            hintText: 'Ask about yellow leaves, companion planting...',
+                            hintText: 'Ask about plant care, diseases, soil...',
                             hintStyle: const TextStyle(color: AppColors.onSurfaceFaint, fontSize: 13),
                             filled: true,
                             fillColor: AppColors.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(22),
                               borderSide: const BorderSide(color: AppColors.border, width: 1.0),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(22),
                               borderSide: const BorderSide(color: AppColors.border, width: 1.0),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+                              borderRadius: BorderRadius.circular(22),
+                              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Container(
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.primary,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.send_rounded, color: Colors.white),
+                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                           onPressed: () {
                             _sendMessage(_messageController.text, chatProvider, gardenProvider);
                           },
@@ -279,57 +336,269 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildTypingDot(int delayMs) {
+    return Container(
+      width: 7,
+      height: 7,
+      decoration: BoxDecoration(
+        color: AppColors.onSurfaceMuted,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    )
+        .animate(onPlay: (c) => c.repeat())
+        .scale(
+          begin: const Offset(1, 1),
+          end: const Offset(0.5, 0.5),
+          duration: 600.ms,
+          delay: Duration(milliseconds: delayMs),
+          curve: Curves.easeInOut,
+        )
+        .then()
+        .scale(
+          begin: const Offset(0.5, 0.5),
+          end: const Offset(1, 1),
+          duration: 600.ms,
+        );
+  }
+
   Widget _buildChatBubble(ChatMessage message) {
     final isUser = message.isUser;
-    
+
     return Row(
       mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (!isUser) ...[
-          Container(
-            margin: const EdgeInsets.only(right: 10, top: 4),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primary.withValues(alpha: 0.12),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+          Padding(
+            padding: const EdgeInsets.only(right: 8, bottom: 2),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.12),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 14),
             ),
-            child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 16),
           ),
         ],
         Flexible(
           child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isUser 
-                  ? AppColors.primary.withValues(alpha: 0.15) 
+              color: isUser
+                  ? AppColors.primary.withValues(alpha: 0.15)
                   : AppColors.surface,
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(20),
-                topRight: const Radius.circular(20),
-                bottomLeft: Radius.circular(isUser ? 20 : 0),
-                bottomRight: Radius.circular(isUser ? 0 : 20),
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(isUser ? 18 : 4),
+                bottomRight: Radius.circular(isUser ? 4 : 18),
               ),
               border: Border.all(
-                color: isUser 
-                    ? AppColors.primary.withValues(alpha: 0.4) 
+                color: isUser
+                    ? AppColors.primary.withValues(alpha: 0.35)
                     : AppColors.border,
                 width: 1,
               ),
             ),
+            child: _buildMessageContent(message.text),
+          ),
+        ),
+        if (isUser) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 2),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.2),
+              ),
+              child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 14),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Builds message content, detecting embedded Amazon product links
+  /// and rendering them as rich product cards instead of raw URLs.
+  Widget _buildMessageContent(String text) {
+    // Check if there are any Amazon links in the text
+    final amazonRegex = RegExp(r'https://www\.amazon\.com/dp/([A-Z0-9]{10})\?tag=\S+');
+    final hasAmazonLink = amazonRegex.hasMatch(text);
+
+    if (!hasAmazonLink) {
+      return _buildMarkdownText(
+        text,
+        const TextStyle(color: AppColors.onSurface, fontSize: 13.5, height: 1.5),
+      );
+    }
+
+    // Split text around Amazon links and render product cards
+    final List<Widget> widgets = [];
+    final parts = text.split(amazonRegex);
+    final matches = amazonRegex.allMatches(text).toList();
+
+    // Find the matching ShopProduct for a given URL
+    ShopProduct? findProduct(String asin) {
+      try {
+        return ShopProduct.defaultProducts.firstWhere((p) => p.asin == asin);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    for (int i = 0; i < parts.length; i++) {
+      // Add text before/between links
+      final trimmedPart = parts[i].trim();
+      if (trimmedPart.isNotEmpty) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
             child: _buildMarkdownText(
-              message.text,
-              const TextStyle(
-                color: AppColors.onSurface,
-                fontSize: 13.5,
-                height: 1.45,
+              trimmedPart,
+              const TextStyle(color: AppColors.onSurface, fontSize: 13.5, height: 1.5),
+            ),
+          ),
+        );
+      }
+
+      // Add product card for each matched link
+      if (i < matches.length) {
+        final fullUrl = matches[i].group(0)!;
+        final asin = matches[i].group(1)!;
+        final product = findProduct(asin);
+
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: product != null
+                ? _buildProductCard(product)
+                : _buildRawLink(fullUrl),
+          ),
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: widgets,
+    );
+  }
+
+  /// Renders a rich product card for matched Amazon products
+  Widget _buildProductCard(ShopProduct product) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Product image header
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(13),
+              topRight: Radius.circular(13),
+            ),
+            child: Image.network(
+              product.imageUrl,
+              height: 110,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 110,
+                color: AppColors.surface,
+                child: const Center(
+                  child: Icon(Icons.local_florist_rounded, color: AppColors.primary, size: 36),
+                ),
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.title,
+                  style: const TextStyle(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.star_rounded, color: AppColors.accent, size: 14),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${product.rating}  •  ${product.price}',
+                      style: const TextStyle(
+                        color: AppColors.onSurfaceMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () async {
+                        final uri = Uri.parse(product.affiliateUrl);
+                        try {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } catch (_) {}
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'View on Amazon',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Fallback for Amazon links not in the local catalog
+  Widget _buildRawLink(String url) {
+    return GestureDetector(
+      onTap: () async {
+        try {
+          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        } catch (_) {}
+      },
+      child: Text(
+        url,
+        style: const TextStyle(
+          color: AppColors.accentLight,
+          fontSize: 13,
+          decoration: TextDecoration.underline,
         ),
-      ],
+      ),
     );
   }
 
@@ -339,9 +608,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i].trim();
-      
+
       if (line.isEmpty) {
-        children.add(const SizedBox(height: 8));
+        children.add(const SizedBox(height: 6));
         continue;
       }
 
@@ -349,12 +618,12 @@ class _ChatScreenState extends State<ChatScreen> {
         final cleanHeader = line.replaceAll(RegExp(r'^#+\s*'), '');
         children.add(
           Padding(
-            padding: const EdgeInsets.only(top: 12.0, bottom: 4.0),
+            padding: const EdgeInsets.only(top: 10.0, bottom: 4.0),
             child: Text(
               cleanHeader,
               style: baseStyle.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: baseStyle.fontSize! + 2.0,
+                fontSize: baseStyle.fontSize! + 1.5,
                 color: AppColors.onSurface,
               ),
             ),
@@ -367,7 +636,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final cleanBullet = line.replaceFirst(RegExp(r'^[\*\-]\s*'), '');
         children.add(
           Padding(
-            padding: const EdgeInsets.only(left: 8.0, bottom: 6.0),
+            padding: const EdgeInsets.only(left: 8.0, bottom: 5.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -390,14 +659,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
       children.add(
         Padding(
-          padding: const EdgeInsets.only(bottom: 6.0),
+          padding: const EdgeInsets.only(bottom: 4.0),
           child: _buildLineWithRichFormatting(context, line, baseStyle),
         ),
       );
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: children,
     );
@@ -405,8 +674,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildLineWithRichFormatting(BuildContext context, String text, TextStyle baseStyle) {
     final List<InlineSpan> spans = [];
-    final RegExp regex = RegExp(r'(https?://[^\s]+)|(\*\*(.*?)\*\*)');
-    
+    // Regex for non-Amazon URLs and bold text; Amazon links are handled separately
+    final RegExp regex = RegExp(r'(https?://(?!www\.amazon\.com)[^\s]+)|(\*\*(.*?)\*\*)');
+
     int lastIndex = 0;
     for (final Match match in regex.allMatches(text)) {
       if (match.start > lastIndex) {
@@ -415,15 +685,16 @@ class _ChatScreenState extends State<ChatScreen> {
           style: baseStyle,
         ));
       }
-      
+
       final urlMatch = match.group(1);
       final boldMatch = match.group(3);
-      
+
       if (urlMatch != null) {
         String cleanUrl = urlMatch;
-        String trailingPunctuation = "";
-        while (cleanUrl.isNotEmpty && (cleanUrl.endsWith('.') || cleanUrl.endsWith(')') || cleanUrl.endsWith(','))) {
-          trailingPunctuation = cleanUrl.substring(cleanUrl.length - 1) + trailingPunctuation;
+        String trailing = "";
+        while (cleanUrl.isNotEmpty &&
+            (cleanUrl.endsWith('.') || cleanUrl.endsWith(')') || cleanUrl.endsWith(','))) {
+          trailing = cleanUrl[cleanUrl.length - 1] + trailing;
           cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
         }
 
@@ -436,20 +707,14 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           recognizer: TapGestureRecognizer()
             ..onTap = () async {
-              final Uri url = Uri.parse(cleanUrl);
               try {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
-              } catch (e) {
-                debugPrint("Error launching url: $e");
-              }
+                await launchUrl(Uri.parse(cleanUrl), mode: LaunchMode.externalApplication);
+              } catch (_) {}
             },
         ));
 
-        if (trailingPunctuation.isNotEmpty) {
-          spans.add(TextSpan(
-            text: trailingPunctuation,
-            style: baseStyle,
-          ));
+        if (trailing.isNotEmpty) {
+          spans.add(TextSpan(text: trailing, style: baseStyle));
         }
       } else if (boldMatch != null) {
         spans.add(TextSpan(
@@ -460,19 +725,14 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ));
       }
-      
+
       lastIndex = match.end;
     }
-    
+
     if (lastIndex < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(lastIndex),
-        style: baseStyle,
-      ));
+      spans.add(TextSpan(text: text.substring(lastIndex), style: baseStyle));
     }
-    
-    return RichText(
-      text: TextSpan(children: spans),
-    );
+
+    return RichText(text: TextSpan(children: spans));
   }
 }

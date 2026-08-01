@@ -878,19 +878,22 @@ class ResultScreen extends StatelessWidget {
     final allProds = ShopProduct.defaultProducts;
     
     if (name.contains('fungal') || name.contains('mildew') || name.contains('rust') || 
-        name.contains('blight') || name.contains('spot') || name.contains('rot') || 
-        name.contains('scab') || name.contains('mold')) {
-      return allProds.where((p) => p.id == 'prod_neem_oil' || p.id == 'prod_systemic_pest').toList();
+        name.contains('blight') || name.contains('spot') || name.contains('scab') || name.contains('mold')) {
+      return allProds.where((p) => p.id == 'prod_neem_oil' || p.id == 'prod_copper_fungicide').toList();
+    } else if (name.contains('rot') || name.contains('damping') || name.contains('wilt')) {
+      return allProds.where((p) => p.id == 'prod_copper_fungicide' || p.id == 'prod_moisture_meter').toList();
     } else if (name.contains('pest') || name.contains('aphid') || name.contains('mite') || 
                name.contains('scale') || name.contains('bug') || name.contains('thrip') || 
                name.contains('insect') || name.contains('caterpillar') || name.contains('gnat')) {
       return allProds.where((p) => p.id == 'prod_neem_oil' || p.id == 'prod_systemic_pest').toList();
-    } else if (name.contains('nutrient') || name.contains('deficiency') || name.contains('yellow') || 
-               name.contains('chlorosis') || name.contains('nitrogen') || name.contains('healthy')) {
-      return allProds.where((p) => p.id == 'prod_miracle_gro' || p.id == 'prod_soil_mix' || p.id == 'prod_moisture_meter').toList();
+    } else if (name.contains('nutrient') || name.contains('deficiency') || 
+               name.contains('chlorosis') || name.contains('nitrogen')) {
+      return allProds.where((p) => p.id == 'prod_miracle_gro' || p.id == 'prod_soil_mix').toList();
+    } else if (name == 'healthy') {
+      return allProds.where((p) => p.id == 'prod_moisture_meter' || p.id == 'prod_miracle_gro').toList();
     }
     
-    // Fallback
+    // General fallback
     return allProds.where((p) => p.id == 'prod_neem_oil' || p.id == 'prod_moisture_meter').toList();
   }
 
@@ -933,11 +936,12 @@ class ResultScreen extends StatelessWidget {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: AppColors.backgroundLight,
+                          color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(6.0),
+                          padding: const EdgeInsets.all(4.0),
                           child: CachedNetworkImage(
                             imageUrl: product.imageUrl,
                             fit: BoxFit.contain,
@@ -948,10 +952,12 @@ class ResultScreen extends StatelessWidget {
                                 color: AppColors.backgroundLight,
                               ),
                             ),
-                            errorWidget: (context, url, error) => const Icon(
-                              Icons.broken_image_rounded,
-                              color: Colors.white24,
-                              size: 24,
+                            errorWidget: (context, url, error) => const Center(
+                              child: Icon(
+                                Icons.local_florist_rounded,
+                                color: AppColors.primary,
+                                size: 24,
+                              ),
                             ),
                           ),
                         ),

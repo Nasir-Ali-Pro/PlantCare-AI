@@ -37,7 +37,7 @@ class PlantDiagnosisOrchestrator {
     
     final bool isPlant = detectionResult['is_plant'] == true || detectionResult['is_plant']?.toString().toLowerCase() == 'true';
     if (!isPlant) {
-      throw Exception("The uploaded picture is not a plant, and I cannot assist you.");
+      throw Exception("NOT_A_PLANT: Please upload a clear photo of a plant, leaf, or crop to begin diagnosis.");
     }
 
     final String species = detectionResult['species'] ?? 'Unknown Plant';
