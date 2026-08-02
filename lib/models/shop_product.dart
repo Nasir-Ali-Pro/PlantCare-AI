@@ -76,18 +76,18 @@ class ShopProduct {
     );
   }
 
-  // Unsplash CDN helper — produces a stable, hotlink-friendly URL
+  // Unsplash CDN helper — hotlink-friendly, no auth required
   static String _img(String photoId) =>
       'https://images.unsplash.com/$photoId'
       '?w=400&auto=format&fit=crop&q=80';
 
   static final List<ShopProduct> defaultProducts = [
-    // ── Pest & Disease Control ─────────────────────────────────
+    // ── Pest & Disease Control ─────────────────────────────────────────────
     ShopProduct(
       id: 'prod_neem_oil',
       title: 'Southern Ag Triple Action Neem Oil',
       description:
-          'OMRI-listed cold-pressed neem oil concentrate — the ultimate 3-in-1 organic solution. Controls fungal diseases (powdery mildew, rust, black spot), sap-sucking insects (aphids, whiteflies, spider mites), and soft-bodied pests in a single application. Highly effective on vegetables, herbs, and ornamentals.',
+          'OMRI-listed cold-pressed neem oil concentrate — the ultimate 3-in-1 organic solution. Controls fungal diseases (powdery mildew, rust, black spot), sap-sucking insects (aphids, whiteflies, spider mites), and soft-bodied pests in a single application. Ideal for vegetables, herbs, and ornamentals.',
       price: '\$14.99',
       rating: 4.6,
       reviewCount: 3420,
@@ -99,7 +99,7 @@ class ShopProduct {
       id: 'prod_systemic_pest',
       title: 'Bonide Systemic Houseplant Insect Control',
       description:
-          'Granular systemic insecticide that absorbs through roots for inside-out plant protection lasting up to 8 weeks. One application defends the entire plant against aphids, scale, thrips, fungus gnats, and whiteflies — no spraying required. Simply sprinkle on soil and water in.',
+          'Granular systemic insecticide that absorbs through roots for inside-out plant protection lasting up to 8 weeks. Defends against aphids, scale, thrips, fungus gnats, and whiteflies — no spraying required. Sprinkle on soil and water in.',
       price: '\$11.95',
       rating: 4.7,
       reviewCount: 1890,
@@ -111,7 +111,7 @@ class ShopProduct {
       id: 'prod_copper_fungicide',
       title: 'Bonide Copper Fungicide Spray',
       description:
-          'Broad-spectrum copper-based fungicide and bactericide approved for organic gardening. Controls blight, leaf curl, powdery mildew, downy mildew, anthracnose, and fire blight on vegetables, fruits, and ornamentals. Ready-to-use formula — no mixing required.',
+          'Broad-spectrum copper-based fungicide and bactericide approved for organic gardening. Controls blight, leaf curl, powdery mildew, downy mildew, anthracnose, and fire blight. Ready-to-use formula — no mixing required.',
       price: '\$16.97',
       rating: 4.5,
       reviewCount: 2870,
@@ -119,13 +119,25 @@ class ShopProduct {
       asin: 'B000BQKRSS',
       category: 'Pest & Disease Control',
     ),
+    ShopProduct(
+      id: 'prod_insect_soap',
+      title: 'Safer Brand Insect Killing Soap Concentrate',
+      description:
+          'OMRI-listed insecticidal soap that kills soft-bodied insects on contact — no residue left behind after drying. Effective against aphids, mites, whiteflies, mealybugs, leafhoppers, and more. Safe for vegetables, fruits, and ornamentals. Makes up to 6 gallons of ready-to-spray solution.',
+      price: '\$9.97',
+      rating: 4.4,
+      reviewCount: 6820,
+      imageUrl: _img('photo-1530836369250-ef72a3f5cda8'),
+      asin: 'B00CPKH8XI',
+      category: 'Pest & Disease Control',
+    ),
 
-    // ── Fertilizers & Soil ────────────────────────────────────
+    // ── Fertilizers & Soil ─────────────────────────────────────────────────
     ShopProduct(
       id: 'prod_miracle_gro',
       title: 'Miracle-Gro Water Soluble All Purpose Plant Food',
       description:
-          'The most trusted fertilizer brand for 60+ years. This complete NPK formula (24-8-16) feeds plant roots and leaves instantly for lush foliage, vibrant blooms, and vigorous vegetables. Works on all houseplants, flowers, vegetables, and shrubs. Feeds up to 600 sq. ft. per pack.',
+          'The most trusted fertilizer brand for 60+ years. Complete NPK formula (24-8-16) feeds instantly for lush foliage, vibrant blooms, and vigorous vegetables. Works on all houseplants, flowers, vegetables, and shrubs. Feeds up to 600 sq. ft. per pack.',
       price: '\$8.49',
       rating: 4.8,
       reviewCount: 82500,
@@ -137,7 +149,7 @@ class ShopProduct {
       id: 'prod_soil_mix',
       title: 'Espoma Organic Potting Soil Mix',
       description:
-          'Premium all-natural organic potting mix enriched with Myco-tone mycorrhizae for stronger root development and better drought resistance. Contains sphagnum peat moss, perlite, and earthworm castings. Perfectly balanced for moisture retention and drainage — ideal for indoor containers.',
+          'Premium all-natural organic potting mix enriched with Myco-tone mycorrhizae for stronger root development and better drought resistance. Contains sphagnum peat moss, perlite, and earthworm castings. Ideal for indoor containers.',
       price: '\$12.99',
       rating: 4.5,
       reviewCount: 4210,
@@ -149,7 +161,7 @@ class ShopProduct {
       id: 'prod_perlite',
       title: 'Organic Perlite by Gardenera (1 Qt)',
       description:
-          'Professional-grade horticultural perlite for improving soil drainage, aeration, and root health. Essential amendment for preventing root rot in succulent, cactus, and houseplant mixes. Lightweight and pH-neutral — mix with any potting soil at a 20-30% ratio.',
+          'Professional-grade horticultural perlite for improving soil drainage, aeration, and root health. Essential for preventing root rot in succulent, cactus, and houseplant mixes. Lightweight and pH-neutral — mix at a 20-30% ratio.',
       price: '\$9.95',
       rating: 4.6,
       reviewCount: 3150,
@@ -157,13 +169,37 @@ class ShopProduct {
       asin: 'B08HM3DWG3',
       category: 'Fertilizers & Soil',
     ),
+    ShopProduct(
+      id: 'prod_osmocote',
+      title: 'Osmocote Smart-Release Plant Food Plus',
+      description:
+          'America\'s #1 brand of slow-release fertilizer. Each granule is coated with a semi-permeable resin that releases nutrients based on soil temperature — feeding plants for up to 6 months with a single application. Works for all indoor and outdoor plants, in containers and in-ground.',
+      price: '\$19.97',
+      rating: 4.7,
+      reviewCount: 28400,
+      imageUrl: _img('photo-1444930694458-01babf71870c'),
+      asin: 'B000UJVGX0',
+      category: 'Fertilizers & Soil',
+    ),
+    ShopProduct(
+      id: 'prod_foxfarm_soil',
+      title: 'FoxFarm Ocean Forest Potting Soil',
+      description:
+          'The premium potting mix trusted by professional growers. A powerful blend of earthworm castings, bat guano, sea-going fish and crab meal, aged forest products, and sphagnum peat moss. pH adjusted at 6.3–6.8 for optimum plant performance and vigorous growth from start to finish.',
+      price: '\$21.99',
+      rating: 4.7,
+      reviewCount: 19200,
+      imageUrl: _img('photo-1515150144380-bca9f1650049'),
+      asin: 'B00L0AOKYO',
+      category: 'Fertilizers & Soil',
+    ),
 
-    // ── Gardening Tools ────────────────────────────────────────
+    // ── Gardening Tools ────────────────────────────────────────────────────
     ShopProduct(
       id: 'prod_fiskars_shears',
       title: 'Fiskars Micro-Tip Pruning Shears',
       description:
-          'Award-winning precision micro-tip pruning scissors with hardened steel non-stick blade for clean, quick cuts every time. Ergonomic soft-grip handles reduce hand fatigue. Perfect for deadheading flowers, trimming dead leaves, and shaping potted plants. Easy push-button opening.',
+          'Award-winning precision micro-tip pruning scissors with hardened steel non-stick blade for clean, quick cuts every time. Ergonomic soft-grip handles reduce hand fatigue. Perfect for deadheading, trimming dead leaves, and shaping potted plants.',
       price: '\$13.58',
       rating: 4.8,
       reviewCount: 15400,
@@ -172,48 +208,36 @@ class ShopProduct {
       category: 'Gardening Tools',
     ),
     ShopProduct(
-      id: 'prod_hand_trowel',
-      title: 'Fiskars Ergo Gardening Hand Trowel',
-      description:
-          'Ergonomically designed heavy-duty cast aluminum trowel with a comfortable soft-grip handle for reduced wrist fatigue. Graduated measurements on the blade help with precise planting depth. Rust-resistant and ideal for transplanting, digging, and loosening soil in pots and beds.',
-      price: '\$8.99',
-      rating: 4.8,
-      reviewCount: 3820,
-      imageUrl: _img('photo-1564419320461-6870880221ad'),
-      asin: 'B00002N5HG',
-      category: 'Gardening Tools',
-    ),
-    ShopProduct(
       id: 'prod_garden_gloves',
       title: 'COOLJOB Gardening Gloves (6 Pairs)',
       description:
-          'Breathable rubber-coated safety work gloves with textured grip for secure handling of soil, pots, and tools. Form-fitting design for excellent dexterity while planting or weeding. Machine washable. Available in multiple sizes — great value 6-pair pack for everyday garden use.',
+          'Breathable rubber-coated safety work gloves with textured grip for secure handling of soil, pots, and tools. Form-fitting design for excellent dexterity while planting or weeding. Machine washable. Great value 6-pair pack for everyday garden use.',
       price: '\$13.99',
       rating: 4.5,
-      reviewCount: 8650,
+      reviewCount: 9200,
       imageUrl: _img('photo-1620912167809-e21c7f0e56c6'),
-      asin: 'B07GVDB7V1',
+      asin: 'B08863XWN2',
       category: 'Gardening Tools',
     ),
 
-    // ── Watering Equipment ─────────────────────────────────────
+    // ── Watering Equipment ─────────────────────────────────────────────────
     ShopProduct(
       id: 'prod_moisture_meter',
       title: 'XLUX Soil Moisture Meter',
       description:
-          'Simple, accurate, no-battery-needed soil moisture sensor. Instantly reads moisture level on a clear 1-10 scale — take the guesswork out of watering and prevent root rot from overwatering. Perfect for all houseplants, succulents, vegetables, and outdoor garden beds.',
+          'Simple, accurate, no-battery-needed soil moisture sensor. Instantly reads moisture level on a clear 1-10 scale — take the guesswork out of watering and prevent root rot. Perfect for houseplants, succulents, vegetables, and outdoor garden beds.',
       price: '\$10.99',
       rating: 4.5,
-      reviewCount: 47800,
+      reviewCount: 51300,
       imageUrl: _img('photo-1523348837708-15d4a09cfac2'),
-      asin: 'B00FJFLJMS',
+      asin: 'B014MJ8J2U',
       category: 'Watering Equipment',
     ),
     ShopProduct(
       id: 'prod_watering_can',
       title: 'Mkono 1.6L Long Spout Indoor Watering Can',
       description:
-          'Elegant rose-gold stainless steel watering can with a precision long spout for accurate root-zone watering of indoor plants, terrariums, and hanging baskets. 1.6L capacity reduces refill trips. Rust-proof and lightweight — the perfect desk or windowsill companion.',
+          'Elegant rose-gold stainless steel watering can with a precision long spout for accurate root-zone watering of indoor plants, terrariums, and hanging baskets. 1.6L capacity. Rust-proof and lightweight — the perfect windowsill companion.',
       price: '\$19.99',
       rating: 4.6,
       reviewCount: 5280,
@@ -222,12 +246,12 @@ class ShopProduct {
       category: 'Watering Equipment',
     ),
 
-    // ── Pots & Containers ──────────────────────────────────────
+    // ── Pots & Containers ──────────────────────────────────────────────────
     ShopProduct(
       id: 'prod_self_watering_pots',
       title: 'Lechuza Classico Self-Watering Planter',
       description:
-          'Premium German-engineered self-watering planter with a sub-irrigation reservoir that keeps roots consistently moist without waterlogging. Sleek matte finish in multiple colors. The internal water level indicator shows exactly when to refill — no more guessing or wilted plants.',
+          'Premium German-engineered self-watering planter with a sub-irrigation reservoir that keeps roots consistently moist. Sleek matte finish in multiple colors. Internal water level indicator shows exactly when to refill — no more wilted plants.',
       price: '\$29.99',
       rating: 4.7,
       reviewCount: 2840,
@@ -239,7 +263,7 @@ class ShopProduct {
       id: 'prod_hanging_pots',
       title: 'La Jolie Muse Hanging Planter Pots (2-Pack)',
       description:
-          'Stylish weather-resistant hanging planters with a concrete-texture finish that blends seamlessly with modern interior décor. Built-in drainage holes prevent root rot. Includes adjustable hanging rope. Perfect for trailing plants like pothos, ivy, string of pearls, and spider plants.',
+          'Stylish weather-resistant hanging planters with a concrete-texture finish. Built-in drainage holes prevent root rot. Includes adjustable hanging rope. Perfect for trailing plants like pothos, ivy, string of pearls, and spider plants.',
       price: '\$21.99',
       rating: 4.7,
       reviewCount: 1840,
@@ -248,12 +272,12 @@ class ShopProduct {
       category: 'Pots & Containers',
     ),
 
-    // ── Indoor Growing ─────────────────────────────────────────
+    // ── Indoor Growing ─────────────────────────────────────────────────────
     ShopProduct(
       id: 'prod_grow_light',
       title: 'SANSI 15W LED Grow Light Bulb',
       description:
-          'Full-spectrum COC LED grow bulb engineered for indoor plant growth. Emits a balanced 380-780nm spectrum that mimics natural sunlight for photosynthesis, flowering, and fruiting. Fits standard E26 socket, uses ceramic heatsink for cool operation and 50,000-hour lifespan. Ideal for any room.',
+          'Full-spectrum COC LED grow bulb engineered for indoor plant growth. Emits 380-780nm spectrum mimicking natural sunlight. Fits standard E26 socket, uses ceramic heatsink for cool operation and 50,000-hour lifespan.',
       price: '\$17.99',
       rating: 4.7,
       reviewCount: 4700,
@@ -265,13 +289,61 @@ class ShopProduct {
       id: 'prod_propagation_station',
       title: 'Mkono Plant Propagation Station (5 Tubes)',
       description:
-          'Minimalist borosilicate glass propagation station with a modern wood frame. Includes 5 hanging test tubes for rooting cuttings in water — watch roots develop in real time. A beautiful and functional piece for plant lovers. Works great with pothos, herbs, succulents, and tropical cuttings.',
+          'Minimalist borosilicate glass propagation station with a modern wood frame. Five hanging test tubes let you root cuttings in water and watch roots develop in real time. Works great with pothos, herbs, succulents, and tropical cuttings.',
       price: '\$22.99',
       rating: 4.6,
       reviewCount: 3280,
       imageUrl: _img('photo-1517191434949-5e90cd67d2b6'),
       asin: 'B07WFPWFMR',
       category: 'Indoor Growing',
+    ),
+    ShopProduct(
+      id: 'prod_superthrive',
+      title: 'SUPERthrive Plant Vitamin Solution',
+      description:
+          'A legendary, non-toxic vitamin solution used by professional gardeners for over 80 years. Contains Vitamin B1 and kelp to reduce transplant shock, promote strong root development, and revive stressed plants. A small amount goes a very long way — just a few drops per gallon.',
+      price: '\$12.49',
+      rating: 4.6,
+      reviewCount: 14700,
+      imageUrl: _img('photo-1457530378978-8bac673b8062'),
+      asin: 'B000OM82J0',
+      category: 'Indoor Growing',
+    ),
+    ShopProduct(
+      id: 'prod_rooting_powder',
+      title: 'Bonide Bontone II Rooting Powder',
+      description:
+          'The go-to rooting hormone for plant propagation. Contains Indole-3-butyric acid (IBA) to stimulate rapid root development in cuttings, bulbs, and corms. Simply dip the dampened stem end into the powder before planting. Works on pothos, philodendrons, woody shrubs, and most ornamentals.',
+      price: '\$6.49',
+      rating: 4.5,
+      reviewCount: 8950,
+      imageUrl: _img('photo-1549893072-4bc678117f95'),
+      asin: 'B000BX1HGC',
+      category: 'Indoor Growing',
+    ),
+    ShopProduct(
+      id: 'prod_aerogarden',
+      title: 'AeroGarden Harvest Indoor Garden',
+      description:
+          'Grow fresh herbs, salad greens, and vegetables year-round with no soil needed. The patented hydroponic system delivers nutrients directly to roots for up to 5x faster growth than soil. Full-spectrum LED panel included. Holds 6 pods — grow basil, mint, parsley, cherry tomatoes, and more indoors.',
+      price: '\$89.95',
+      rating: 4.6,
+      reviewCount: 35800,
+      imageUrl: _img('photo-1552944150-6dd1180e5999'),
+      asin: 'B07PGL273N',
+      category: 'Indoor Growing',
+    ),
+    ShopProduct(
+      id: 'prod_jobes_spikes',
+      title: "Jobe's Fertilizer Spikes for Houseplants",
+      description:
+          'Pre-measured fertilizer spikes that deliver nutrients directly to the root zone — no mess, no smell, and no guesswork. Each spike releases a continuous supply of nutrients for 2 months. Simply push into damp soil near the plant roots every 30 days. Works for all indoor potted plants.',
+      price: '\$7.49',
+      rating: 4.5,
+      reviewCount: 12600,
+      imageUrl: _img('photo-1509423350716-97f9360b4e09'),
+      asin: 'B000UGBGSO',
+      category: 'Fertilizers & Soil',
     ),
   ];
 }
