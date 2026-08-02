@@ -3,7 +3,8 @@ class ForumComment {
   final String authorName;
   final String authorTitle;
   final bool isVerifiedExpert;
-  final String content;
+  // Mutable so owners/admin can edit in-place without rebuilding the entire list
+  String content;
   final DateTime dateTime;
   int upvotes;
   bool isUpvoted;
@@ -27,10 +28,11 @@ class ForumPost {
   final String authorName;
   final String authorTitle;
   final bool isVerifiedExpert;
-  final String category;
-  final String title;
-  final String content;
-  final List<String> tags;
+  // Mutable so owners/admin can edit in-place without rebuilding the entire list
+  String category;
+  String title;
+  String content;
+  List<String> tags;
   int upvotes;
   bool isUpvoted;
   final List<ForumComment> comments;

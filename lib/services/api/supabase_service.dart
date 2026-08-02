@@ -441,6 +441,67 @@ class SupabaseService {
     }
   }
 
+  // ── Owner / Admin Content Management ────────────────────────────────────
+
+  /// Permanently deletes a forum post. Comments are cascade-deleted by the DB.
+  Future<void> deleteForumPost(String postId) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_posts').delete().eq('id', postId);
+      debugPrint('🗑️ Forum post $postId deleted.');
+    } catch (e) {
+      debugPrint('⚠️ Failed to delete forum post: $e');
+    }
+  }
+
+  /// Updates editable content fields of an existing forum post.
+  Future<void> updateForumPost(
+    String postId, {
+    required String title,
+    required String content,
+    required String category,
+    required List<String> tags,
+  }) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_posts').update({
+        'title': title,
+        'content': content,
+        'category': category,
+        'tags': tags,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', postId);
+      debugPrint('✏️ Forum post $postId updated.');
+    } catch (e) {
+      debugPrint('⚠️ Failed to update forum post: $e');
+    }
+  }
+
+  /// Permanently deletes a forum comment (replies cascade via DB foreign key).
+  Future<void> deleteForumComment(String commentId) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_comments').delete().eq('id', commentId);
+      debugPrint('🗑️ Forum comment $commentId deleted.');
+    } catch (e) {
+      debugPrint('⚠️ Failed to delete forum comment: $e');
+    }
+  }
+
+  /// Updates the text content of an existing forum comment.
+  Future<void> updateForumComment(String commentId, String newContent) async {
+    if (!_isInitialized) return;
+    try {
+      await client.from('forum_comments').update({
+        'content': newContent,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', commentId);
+      debugPrint('✏️ Forum comment $commentId updated.');
+    } catch (e) {
+      debugPrint('⚠️ Failed to update forum comment: $e');
+    }
+  }
+
   /// Sync user profile to Supabase user_profiles table.
   /// Columns: id, username, avatar_url, role, gemini_api_key (admin only), joined_at, updated_at.
   Future<void> syncUserProfile({

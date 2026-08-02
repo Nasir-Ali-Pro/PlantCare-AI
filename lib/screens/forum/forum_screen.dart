@@ -478,6 +478,356 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
+  // ── Owner / Admin Content Management Methods ──────────────────────────
+
+  /// Recursively removes the comment with [commentId] from [list] (including
+  /// nested reply trees). Returns true if found and removed.
+  bool _deleteCommentRecursive(List<ForumComment> list, String commentId) {
+    for (int i = 0; i < list.length; i++) {
+      if (list[i].id == commentId) {
+        list.removeAt(i);
+        return true;
+      }
+      if (list[i].replies.isNotEmpty) {
+        if (_deleteCommentRecursive(list[i].replies, commentId)) return true;
+      }
+    }
+    return false;
+  }
+
+  /// Shows a bottom sheet pre-filled with the post's current data for editing.
+  void _showEditPostSheet(BuildContext context, ForumPost post) {
+    final titleController = TextEditingController(text: post.title);
+    final contentController = TextEditingController(text: post.content);
+    final tagsController = TextEditingController(text: post.tags.join(', '));
+    String category = post.category;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        bool isSubmitting = false;
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(sheetCtx).viewInsets.bottom),
+              child: AppCard(
+                borderRadius: 30,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.edit_rounded, color: AppTheme.primaryGreen, size: 20),
+                            SizedBox(width: 8),
+                            Text('Edit Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(sheetCtx),
+                          icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white12, height: 24),
+                    // Category picker
+                    Row(
+                      children: [
+                        const Text('Category:  ', style: TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.bold)),
+                        DropdownButton<String>(
+                          value: category,
+                          dropdownColor: AppTheme.bgDarkEnd,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          items: _categories.where((c) => c != 'All').map((c) {
+                            return DropdownMenuItem(value: c, child: Text(c));
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setSheetState(() => category = val);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Title field
+                    TextField(
+                      controller: titleController,
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        hintText: 'Post title...',
+                        hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.04),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Content field
+                    TextField(
+                      controller: contentController,
+                      maxLines: 5,
+                      style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                      decoration: InputDecoration(
+                        hintText: 'Post content...',
+                        hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.04),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Tags field
+                    TextField(
+                      controller: tagsController,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Tags (comma separated, e.g. #tomato, #help)',
+                        hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                        prefixIcon: const Icon(Icons.tag_rounded, color: AppTheme.primaryGreen, size: 18),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.04),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Save button
+                    ElevatedButton(
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              if (titleController.text.trim().isEmpty || contentController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Title and content cannot be empty.'), backgroundColor: AppTheme.dangerRed),
+                                );
+                                return;
+                              }
+                              setSheetState(() => isSubmitting = true);
+                              final newTitle = titleController.text.trim();
+                              final newContent = contentController.text.trim();
+                              final newTags = tagsController.text
+                                  .split(',')
+                                  .map((t) => t.trim())
+                                  .where((t) => t.isNotEmpty)
+                                  .toList();
+                              final finalTags = newTags.isNotEmpty ? newTags : ['#general'];
+                              // Update in-place so the list view reflects changes instantly
+                              setState(() {
+                                post.title = newTitle;
+                                post.content = newContent;
+                                post.category = category;
+                                post.tags = finalTags;
+                              });
+                              await SupabaseService().updateForumPost(
+                                post.id,
+                                title: newTitle,
+                                content: newContent,
+                                category: category,
+                                tags: finalTags,
+                              );
+                              setSheetState(() => isSubmitting = false);
+                              if (sheetCtx.mounted) {
+                                Navigator.pop(sheetCtx);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Post updated successfully ✏️'),
+                                      backgroundColor: AppTheme.primaryGreen,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      child: isSubmitting
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Shows a confirmation dialog and permanently deletes a post on confirm.
+  void _showDeletePostConfirmation(BuildContext context, ForumPost post) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2420),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_forever_rounded, color: Color(0xFFEF4444), size: 22),
+            SizedBox(width: 8),
+            Text('Delete Post', style: TextStyle(color: Colors.white, fontSize: 18)),
+          ],
+        ),
+        content: const Text(
+          'This will permanently remove the post and all its comments. This cannot be undone.',
+          style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              setState(() => _posts.removeWhere((p) => p.id == post.id));
+              await SupabaseService().deleteForumPost(post.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Post deleted.'),
+                    backgroundColor: Color(0xFFEF4444),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows an edit dialog for a single comment, updating it in-place on save.
+  void _showEditCommentDialog(
+    BuildContext context,
+    ForumComment comment,
+    StateSetter setModalState,
+  ) {
+    final controller = TextEditingController(text: comment.content);
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2420),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.edit_rounded, color: AppTheme.primaryGreen, size: 20),
+            SizedBox(width: 8),
+            Text('Edit Comment', style: TextStyle(color: Colors.white, fontSize: 18)),
+          ],
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 4,
+          style: const TextStyle(color: Colors.white, fontSize: 13.5),
+          decoration: InputDecoration(
+            hintText: 'Edit your comment...',
+            hintStyle: const TextStyle(color: Colors.white30),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.06),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.all(14),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newContent = controller.text.trim();
+              if (newContent.isEmpty) return;
+              // Update in-place so the comments sheet reflects the change instantly
+              setModalState(() => comment.content = newContent);
+              setState(() {});
+              Navigator.pop(dialogCtx);
+              SupabaseService().updateForumComment(comment.id, newContent);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Comment updated ✏️'),
+                    backgroundColor: AppTheme.primaryGreen,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen),
+            child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows a confirmation dialog and permanently deletes a comment on confirm.
+  void _showDeleteCommentConfirmation(
+    BuildContext context,
+    ForumPost post,
+    ForumComment comment,
+    StateSetter setModalState,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2420),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_forever_rounded, color: Color(0xFFEF4444), size: 22),
+            SizedBox(width: 8),
+            Text('Delete Comment', style: TextStyle(color: Colors.white, fontSize: 18)),
+          ],
+        ),
+        content: const Text(
+          'This comment and all its replies will be permanently deleted.',
+          style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              setModalState(() => _deleteCommentRecursive(post.comments, comment.id));
+              setState(() {});
+              SupabaseService().deleteForumComment(comment.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Comment deleted.'),
+                    backgroundColor: Color(0xFFEF4444),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Post Creation ────────────────────────────────────────────────────────
+
   void _showCreatePostSheet(
     BuildContext context, {
     String prefilledTitle = '',
@@ -908,6 +1258,50 @@ class _ForumScreenState extends State<ForumScreen> {
                           timeStr,
                           style: const TextStyle(color: Colors.white24, fontSize: 9.5),
                         ),
+                        // Comment options — Edit & Delete for owner or admin
+                        if (!isGuest &&
+                            (gardenProvider.username == comment.authorName ||
+                                gardenProvider.isAdmin))
+                          SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              iconSize: 16,
+                              icon: const Icon(Icons.more_vert_rounded, color: Colors.white24, size: 16),
+                              color: const Color(0xFF1A2420),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _showEditCommentDialog(context, comment, setModalState);
+                                } else if (value == 'delete') {
+                                  _showDeleteCommentConfirmation(context, post, comment, setModalState);
+                                }
+                              },
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit_rounded, color: Color(0xFF22C55E), size: 16),
+                                      SizedBox(width: 8),
+                                      Text('Edit', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete_rounded, color: Color(0xFFEF4444), size: 16),
+                                      SizedBox(width: 8),
+                                      Text('Delete', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -1448,30 +1842,57 @@ class _ForumScreenState extends State<ForumScreen> {
                                         style: const TextStyle(color: Colors.white24, fontSize: 10),
                                       ),
                                       const SizedBox(width: 4),
-                                      // Three-dot report menu
+                                      // Post options menu — Edit & Delete for owner/admin; Report for others
                                       Consumer<GardenProvider>(
-                                        builder: (ctx, gp, _) => PopupMenuButton<String>(
-                                          icon: const Icon(Icons.more_vert_rounded, color: Colors.white24, size: 18),
-                                          color: const Color(0xFF1A2420),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                          onSelected: (value) {
-                                            if (value == 'report') {
-                                              _showReportDialog(context, post, gp);
-                                            }
-                                          },
-                                          itemBuilder: (_) => [
-                                            const PopupMenuItem(
-                                              value: 'report',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.flag_rounded, color: Color(0xFFEF4444), size: 16),
-                                                  SizedBox(width: 8),
-                                                  Text('Report Post', style: TextStyle(color: Colors.white, fontSize: 13)),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                        builder: (ctx, gp, _) {
+                                          final canModify = !gp.isGuest &&
+                                              (gp.username == post.authorName || gp.isAdmin);
+                                          return PopupMenuButton<String>(
+                                            icon: const Icon(Icons.more_vert_rounded, color: Colors.white24, size: 18),
+                                            color: const Color(0xFF1A2420),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            onSelected: (value) {
+                                              if (value == 'edit') _showEditPostSheet(context, post);
+                                              if (value == 'delete') _showDeletePostConfirmation(context, post);
+                                              if (value == 'report') _showReportDialog(context, post, gp);
+                                            },
+                                            itemBuilder: (_) => [
+                                              if (canModify) ...[
+                                                const PopupMenuItem(
+                                                  value: 'edit',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.edit_rounded, color: Color(0xFF22C55E), size: 16),
+                                                      SizedBox(width: 8),
+                                                      Text('Edit Post', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const PopupMenuItem(
+                                                  value: 'delete',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.delete_rounded, color: Color(0xFFEF4444), size: 16),
+                                                      SizedBox(width: 8),
+                                                      Text('Delete Post', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                              if (!gp.isGuest && !canModify)
+                                                const PopupMenuItem(
+                                                  value: 'report',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.flag_rounded, color: Color(0xFFEF4444), size: 16),
+                                                      SizedBox(width: 8),
+                                                      Text('Report Post', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                                    ],
+                                                  ),
+                                                ),
+                                            ],
+                                          );
+                                        },
                                       ),
                                     ],
                                   ),
