@@ -524,32 +524,36 @@ class SupabaseService {
 
   // ── Shop & Affiliation Supabase APIs ────────────────────────────────
 
-  /// Fetches shop products dynamically from Supabase.
-  /// Falls back to local [ShopProduct.defaultProducts] on error or configuration miss.
+  /// Fetches shop products from the Supabase shop_products table.
+  /// Falls back to local [ShopProduct.defaultProducts] on any error.
   Future<List<ShopProduct>> fetchShopProducts() async {
     if (!_isInitialized) {
-      debugPrint("🔌 Supabase not configured. Using offline default products.");
+      debugPrint('🔌 Supabase not configured. Using offline default products.');
       return ShopProduct.defaultProducts;
     }
     try {
       final response = await client
           .from('shop_products')
           .select()
-          .order('id', ascending: true);
+          .order('review_count', ascending: false)
+          .limit(50);
 
       if (response.isEmpty) {
-        debugPrint("🛍️ Supabase shop_products table is empty. Using defaults.");
+        debugPrint('🛍️ shop_products table is empty. Using local defaults.');
         return ShopProduct.defaultProducts;
       }
 
-      final List<dynamic> list = response as List<dynamic>;
-      debugPrint("🛍️ Successfully loaded ${list.length} products from Supabase!");
-      return list.map((item) => ShopProduct.fromJson(item as Map<String, dynamic>)).toList();
+      final products = response
+          .map((item) => ShopProduct.fromJson(item as Map<String, dynamic>))
+          .toList();
+      debugPrint('🛍️ Loaded ${products.length} products from Supabase.');
+      return products;
     } catch (e) {
-      debugPrint("⚠️ Supabase shop_products fetch failed (table might not exist): $e. Using local defaults.");
+      debugPrint('⚠️ shop_products fetch failed: $e. Using local defaults.');
       return ShopProduct.defaultProducts;
     }
   }
+
 
   /// Seeds default products to Supabase shop_products table if it exists and is empty.
   Future<void> seedShopProductsIfEmpty() async {

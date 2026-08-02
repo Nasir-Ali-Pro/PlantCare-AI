@@ -122,7 +122,6 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                               padding: const EdgeInsets.all(12.0),
                               child: CachedNetworkImage(
                                 imageUrl: product.imageUrl,
-                                httpHeaders: ShopProduct.amazonImageHeaders,
                                 fit: BoxFit.contain,
                                 placeholder: (context, url) => Shimmer.fromColors(
                                   enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
@@ -131,7 +130,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                                   child: Container(color: AppColors.backgroundLight),
                                 ),
                                 errorWidget: (context, url, error) {
-                                  debugPrint('🖼️ Image load FAILED → $url\nError: $error');
+                                  debugPrint('🖼️ Detail image FAILED → $url\n$error');
                                   return const Center(
                                     child: Icon(
                                       Icons.local_florist_rounded,
@@ -515,7 +514,6 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                         padding: const EdgeInsets.all(8.0),
                         child: CachedNetworkImage(
                           imageUrl: product.imageUrl,
-                          httpHeaders: ShopProduct.amazonImageHeaders,
                           fit: BoxFit.contain,
                           placeholder: (context, url) => Shimmer.fromColors(
                             enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
