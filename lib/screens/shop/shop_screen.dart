@@ -120,26 +120,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                             borderRadius: BorderRadius.circular(20),
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: CachedNetworkImage(
-                                imageUrl: product.imageUrl,
-                                fit: BoxFit.contain,
-                                placeholder: (context, url) => Shimmer.fromColors(
-                                  enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
-                                  baseColor: AppColors.surfaceHighlight,
-                                  highlightColor: AppColors.borderLight,
-                                  child: Container(color: AppColors.backgroundLight),
-                                ),
-                                errorWidget: (context, url, error) {
-                                  debugPrint('🖼️ Detail image FAILED → $url\n$error');
-                                  return const Center(
-                                    child: Icon(
-                                      Icons.local_florist_rounded,
-                                      color: AppColors.primary,
-                                      size: 60,
-                                    ),
-                                  );
-                                },
-                              ),
+                              child: _buildProductImage(product, iconSize: 60),
                             ),
                           ),
                         ),
@@ -512,26 +493,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                     Positioned.fill(
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: CachedNetworkImage(
-                          imageUrl: product.imageUrl,
-                          fit: BoxFit.contain,
-                          placeholder: (context, url) => Shimmer.fromColors(
-                            enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
-                            baseColor: AppColors.surfaceHighlight,
-                            highlightColor: AppColors.borderLight,
-                            child: Container(color: AppColors.backgroundLight),
-                          ),
-                          errorWidget: (context, url, error) {
-                            debugPrint('🖼️ Grid image FAILED → $url\nError: $error');
-                            return const Center(
-                              child: Icon(
-                                Icons.local_florist_rounded,
-                                color: AppColors.primary,
-                                size: 40,
-                              ),
-                            );
-                          },
-                        ),
+                        child: _buildProductImage(product, iconSize: 40),
                       ),
                     ),
                     // Verified badge — top left
@@ -729,11 +691,39 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white38, fontSize: 13.5, height: 1.4),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProductImage(ShopProduct product, {double iconSize = 40, BoxFit fit = BoxFit.contain}) {
+    final assetPath = 'assets/images/shop/${product.id}.jpg';
+    return CachedNetworkImage(
+      imageUrl: product.imageUrl,
+      fit: fit,
+      placeholder: (context, url) => Shimmer.fromColors(
+        enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
+        baseColor: AppColors.surfaceHighlight,
+        highlightColor: AppColors.borderLight,
+        child: Container(color: AppColors.backgroundLight),
+      ),
+      errorWidget: (context, url, error) {
+        return Image.asset(
+          assetPath,
+          fit: fit,
+          errorBuilder: (context, err, stack) {
+            return Center(
+              child: Icon(
+                Icons.local_florist_rounded,
+                color: AppColors.primary,
+                size: iconSize,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
