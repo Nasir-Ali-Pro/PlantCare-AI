@@ -15,6 +15,7 @@ import '../scanning/scanning_screen.dart';
 import '../history/history_screen.dart';
 import '../result/result_screen.dart';
 import '../forum/forum_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -227,10 +228,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.eco_rounded, color: AppColors.primary, size: 24),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 28,
+                height: 28,
+                fit: BoxFit.contain,
+              ),
+            ),
             const SizedBox(width: 8),
             Text(
-              'PlantCare',
+              'PlantCare AI',
               style: theme.textTheme.displayMedium?.copyWith(
                 fontSize: 22,
               ),
@@ -293,7 +302,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 16),
                       GestureDetector(
                         onTap: () {
-                          // cosmetic profile avatar
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                          );
                         },
                         child: Container(
                           width: 50,
@@ -314,13 +326,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               end: Alignment.bottomRight,
                             ),
                           ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.person_outline_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
+                          child: gardenProvider.avatarUrl.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(25),
+                                  child: buildPlantImage(
+                                    gardenProvider.avatarUrl,
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : const Center(
+                                  child: Icon(
+                                    Icons.person_outline_rounded,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
                         ).animate().fade(duration: 350.ms, delay: 150.ms).scale(begin: const Offset(0.8, 0.8)),
                       ),
                     ],

@@ -930,10 +930,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.spa_rounded, color: AppColors.primary, size: 24),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset(
+                  'assets/images/app_logo.png',
+                  width: 26,
+                  height: 26,
+                  fit: BoxFit.contain,
+                ),
+              ),
               const SizedBox(width: 10),
               const Text(
-                'PlantCare',
+                'PlantCare AI',
                 style: TextStyle(
                   color: AppColors.onSurface,
                   fontWeight: FontWeight.bold,
@@ -945,7 +953,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 10),
           const Text(
-            'PlantCare AI',
+            'A BSCS Final Year Project',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.onSurfaceMuted,

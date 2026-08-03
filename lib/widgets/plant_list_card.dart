@@ -225,33 +225,58 @@ class PlantListCard extends StatelessWidget {
             const SizedBox(height: 10),
             Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
             const SizedBox(height: 8),
-            // Action row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildActionButton(Icons.water_drop_rounded, 'Water', AppTheme.primaryGreen, () {
-                  provider.waterPlant(plant.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${plant.nickname} has been watered.'),
-                      backgroundColor: AppColors.primary,
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                }),
-                _buildActionButton(Icons.science_rounded, 'Fertilize', AppTheme.accentAmber, () {
-                  provider.fertilizePlant(plant.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${plant.nickname} has been fertilized.'),
-                      backgroundColor: AppColors.primary,
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                }),
-                _buildActionButton(Icons.menu_book_rounded, 'Journal', const Color(0xFFA78BFA), onAddJournal),
-                _buildActionButton(Icons.delete_outline_rounded, 'Delete', Colors.white.withValues(alpha: 0.35), onDelete),
-              ],
+            // Action row — scrollable horizontally to prevent overflow on small screens
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  _buildActionButton(Icons.water_drop_rounded, 'Water', AppTheme.primaryGreen, () {
+                    provider.waterPlant(plant.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${plant.nickname} has been watered.'),
+                        backgroundColor: AppColors.primary,
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  }),
+                  _buildActionButton(Icons.science_rounded, 'Fertilize', AppTheme.accentAmber, () {
+                    provider.fertilizePlant(plant.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${plant.nickname} has been fertilized.'),
+                        backgroundColor: AppColors.primary,
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  }),
+                  _buildActionButton(
+                    plant.notificationsEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
+                    plant.notificationsEnabled ? 'Alerts' : 'Muted',
+                    plant.notificationsEnabled ? AppTheme.primaryGreen : Colors.white.withValues(alpha: 0.35),
+                    () {
+                      // Capture the NEW state (opposite of current) before toggling
+                      final willEnable = !plant.notificationsEnabled;
+                      provider.togglePlantNotifications(plant.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            willEnable
+                                ? 'Reminders enabled for ${plant.nickname}'
+                                : 'Reminders muted for ${plant.nickname}',
+                          ),
+                          backgroundColor: AppColors.primary,
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildActionButton(Icons.menu_book_rounded, 'Journal', const Color(0xFFA78BFA), onAddJournal),
+                  _buildActionButton(Icons.delete_outline_rounded, 'Delete', Colors.white.withValues(alpha: 0.35), onDelete),
+                ],
+              ),
             ),
           ],
         ),

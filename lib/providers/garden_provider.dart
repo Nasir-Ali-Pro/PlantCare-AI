@@ -29,6 +29,13 @@ class GardenProvider extends ChangeNotifier {
   int _scanCount = 0;
   bool _hasDiseasedScan = false;
 
+  // ── Notification Reminder Time State ──────────────────────
+  int _reminderHour = 9;
+  int _reminderMinute = 0;
+
+  int get reminderHour => _reminderHour;
+  int get reminderMinute => _reminderMinute;
+
   List<GardenPlant> get plants => _plants;
   
   bool get isLoggedIn => _isLoggedIn;
@@ -55,6 +62,54 @@ class GardenProvider extends ChangeNotifier {
   /// Call this once after the first frame from main.dart.
   Future<void> requestNotificationPermissions() async {
     await NotificationService().requestPermissions();
+  }
+
+  // ── Reminder Time Management ─────────────────────────────
+
+  /// Updates and persists the global daily reminder time, then reschedules
+  /// all plant reminders to fire at the new time.
+  Future<void> setReminderTime(int hour, int minute) async {
+    _reminderHour = hour;
+    _reminderMinute = minute;
+    await NotificationService().saveReminderTime(hour, minute);
+    // Reschedule every enabled plant at the new time
+    await NotificationService().rescheduleAllReminders(_plants);
+    notifyListeners();
+  }
+
+  // ── Per-Plant Notification Toggle ────────────────────────
+
+  /// Enables or disables push reminders for a single plant.
+  /// When disabled, any pending notifications for that plant are cancelled.
+  /// When re-enabled, reminders are rescheduled from the plant's last care dates.
+  Future<void> togglePlantNotifications(String plantId) async {
+    final index = _plants.indexWhere((p) => p.id == plantId);
+    if (index == -1) return;
+
+    final plant = _plants[index];
+    final newEnabled = !plant.notificationsEnabled;
+    final updated = plant.copyWith(notificationsEnabled: newEnabled);
+
+    await DatabaseService.savePlant(updated);
+    _plants[index] = updated;
+
+    if (newEnabled) {
+      // Re-schedule both reminders anchored to last care dates
+      await NotificationService().scheduleWateringReminder(
+        updated.id, updated.nickname, updated.wateringFrequencyDays,
+        fromDate: updated.lastWatered,
+      );
+      await NotificationService().scheduleFertilizingReminder(
+        updated.id, updated.nickname, updated.fertilizingFrequencyDays,
+        fromDate: updated.lastFertilized,
+      );
+      debugPrint('🔔 Reminders ENABLED for "${updated.nickname}"');
+    } else {
+      await NotificationService().cancelReminders(updated.id);
+      debugPrint('🔔 Reminders DISABLED for "${updated.nickname}"');
+    }
+
+    notifyListeners();
   }
 
   // ── Persistence & Database Migration ──────────────────────
@@ -90,7 +145,16 @@ class GardenProvider extends ChangeNotifier {
       final reports = await DatabaseService.getReports();
       _hasDiseasedScan = reports.any((r) => r.diseaseName.toLowerCase() != 'healthy' && r.diseaseName.toLowerCase() != 'unknown');
 
+      // ── Load saved reminder time ──────────────────────────
+      _reminderHour = prefs.getInt('notif_reminder_hour') ?? 9;
+      _reminderMinute = prefs.getInt('notif_reminder_minute') ?? 0;
+
       notifyListeners();
+
+      // ── Cold-start: reschedule all reminders ──────────────
+      // OS may have cancelled pending notifications after device reboot
+      // or background task termination. Reschedule every enabled plant.
+      await NotificationService().rescheduleAllReminders(_plants);
     } catch (e) {
       debugPrint("⚠️ Error loading garden data: $e");
     }

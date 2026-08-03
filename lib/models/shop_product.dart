@@ -156,42 +156,6 @@ class ShopProduct {
       asin: 'B002Y08J3E',
       category: 'Fertilizers & Soil',
     ),
-    ShopProduct(
-      id: 'prod_perlite',
-      title: 'Organic Perlite by Gardenera (1 Qt)',
-      description:
-          'Professional-grade horticultural perlite for improving soil drainage, aeration, and root health. Essential for preventing root rot in succulent, cactus, and houseplant mixes. Lightweight and pH-neutral — mix at a 20-30% ratio.',
-      price: '\$9.95',
-      rating: 4.6,
-      reviewCount: 3150,
-      imageUrl: _img('photo-1484318571209-661cf29a69d3', 'prod_perlite'),
-      asin: 'B08HM3DWG3',
-      category: 'Fertilizers & Soil',
-    ),
-    ShopProduct(
-      id: 'prod_osmocote',
-      title: 'Osmocote Smart-Release Plant Food Plus',
-      description:
-          'America\'s #1 brand of slow-release fertilizer. Each granule is coated with a semi-permeable resin that releases nutrients based on soil temperature — feeding plants for up to 6 months with a single application. Works for all indoor and outdoor plants, in containers and in-ground.',
-      price: '\$19.97',
-      rating: 4.7,
-      reviewCount: 28400,
-      imageUrl: _img('photo-1444930694458-01babf71870c', 'prod_osmocote'),
-      asin: 'B000UJVGX0',
-      category: 'Fertilizers & Soil',
-    ),
-    ShopProduct(
-      id: 'prod_foxfarm_soil',
-      title: 'FoxFarm Ocean Forest Potting Soil',
-      description:
-          'The premium potting mix trusted by professional growers. A powerful blend of earthworm castings, bat guano, sea-going fish and crab meal, aged forest products, and sphagnum peat moss. pH adjusted at 6.3–6.8 for optimum plant performance and vigorous growth from start to finish.',
-      price: '\$21.99',
-      rating: 4.7,
-      reviewCount: 19200,
-      imageUrl: _img('photo-1515150144380-bca9f1650049', 'prod_foxfarm_soil'),
-      asin: 'B00L0AOKYO',
-      category: 'Fertilizers & Soil',
-    ),
 
     // ── Gardening Tools ────────────────────────────────────────────────────
     ShopProduct(
@@ -232,44 +196,7 @@ class ShopProduct {
       asin: 'B014MJ8J2U',
       category: 'Watering Equipment',
     ),
-    ShopProduct(
-      id: 'prod_watering_can',
-      title: 'Mkono 1.6L Long Spout Indoor Watering Can',
-      description:
-          'Elegant rose-gold stainless steel watering can with a precision long spout for accurate root-zone watering of indoor plants, terrariums, and hanging baskets. 1.6L capacity. Rust-proof and lightweight — the perfect windowsill companion.',
-      price: '\$19.99',
-      rating: 4.6,
-      reviewCount: 5280,
-      imageUrl: _img('photo-1525498128493-380d1990a112', 'prod_watering_can'),
-      asin: 'B07NJ5P7XJ',
-      category: 'Watering Equipment',
-    ),
 
-    // ── Pots & Containers ──────────────────────────────────────────────────
-    ShopProduct(
-      id: 'prod_self_watering_pots',
-      title: 'Lechuza Classico Self-Watering Planter',
-      description:
-          'Premium German-engineered self-watering planter with a sub-irrigation reservoir that keeps roots consistently moist. Sleek matte finish in multiple colors. Internal water level indicator shows exactly when to refill — no more wilted plants.',
-      price: '\$29.99',
-      rating: 4.7,
-      reviewCount: 2840,
-      imageUrl: _img('photo-1485955900006-10f4d324d411', 'prod_self_watering_pots'),
-      asin: 'B01LXQPJVL',
-      category: 'Pots & Containers',
-    ),
-    ShopProduct(
-      id: 'prod_hanging_pots',
-      title: 'La Jolie Muse Hanging Planter Pots (2-Pack)',
-      description:
-          'Stylish weather-resistant hanging planters with a concrete-texture finish. Built-in drainage holes prevent root rot. Includes adjustable hanging rope. Perfect for trailing plants like pothos, ivy, string of pearls, and spider plants.',
-      price: '\$21.99',
-      rating: 4.7,
-      reviewCount: 1840,
-      imageUrl: _img('photo-1463554050456-f2ed7d3fec09', 'prod_hanging_pots'),
-      asin: 'B07BRCPNZX',
-      category: 'Pots & Containers',
-    ),
 
     // ── Indoor Growing ─────────────────────────────────────────────────────
     ShopProduct(
@@ -282,18 +209,6 @@ class ShopProduct {
       reviewCount: 4700,
       imageUrl: _img('photo-1558618666-fcd25c85cd64', 'prod_grow_light'),
       asin: 'B07BRKT56T',
-      category: 'Indoor Growing',
-    ),
-    ShopProduct(
-      id: 'prod_propagation_station',
-      title: 'Mkono Plant Propagation Station (5 Tubes)',
-      description:
-          'Minimalist borosilicate glass propagation station with a modern wood frame. Five hanging test tubes let you root cuttings in water and watch roots develop in real time. Works great with pothos, herbs, succulents, and tropical cuttings.',
-      price: '\$22.99',
-      rating: 4.6,
-      reviewCount: 3280,
-      imageUrl: _img('photo-1517191434949-5e90cd67d2b6', 'prod_propagation_station'),
-      asin: 'B07WFPWFMR',
       category: 'Indoor Growing',
     ),
     ShopProduct(
@@ -321,28 +236,40 @@ class ShopProduct {
       category: 'Indoor Growing',
     ),
     ShopProduct(
-      id: 'prod_aerogarden',
-      title: 'AeroGarden Harvest Indoor Garden',
+      id: 'prod_pruning_gloves',
+      title: 'Thornproof Leather Gardening Gloves',
       description:
-          'Grow fresh herbs, salad greens, and vegetables year-round with no soil needed. The patented hydroponic system delivers nutrients directly to roots for up to 5x faster growth than soil. Full-spectrum LED panel included. Holds 6 pods — grow basil, mint, parsley, cherry tomatoes, and more indoors.',
-      price: '\$89.95',
-      rating: 4.6,
-      reviewCount: 35800,
-      imageUrl: _img('photo-1552944150-6dd1180e5999', 'prod_aerogarden'),
-      asin: 'B07PGL273N',
-      category: 'Indoor Growing',
+          'Heavy-duty cowhide leather gloves with extended gauntlet cuffs to protect hands and forearms from thorns, brambles, and prickly plants. Ergonomic keystone thumb design ensures natural grip while handling rose bushes, cacti, and heavy tools.',
+      price: '\$18.99',
+      rating: 4.8,
+      reviewCount: 4120,
+      imageUrl: _img('photo-1620912167809-e21c7f0e56c6', 'prod_pruning_gloves'),
+      asin: 'B073Z1P5QC',
+      category: 'Gardening Tools',
     ),
     ShopProduct(
-      id: 'prod_jobes_spikes',
-      title: "Jobe's Fertilizer Spikes for Houseplants",
+      id: 'prod_plant_food_spikes',
+      title: 'Miracle-Gro Indoor Plant Food Spikes',
       description:
-          'Pre-measured fertilizer spikes that deliver nutrients directly to the root zone — no mess, no smell, and no guesswork. Each spike releases a continuous supply of nutrients for 2 months. Simply push into damp soil near the plant roots every 30 days. Works for all indoor potted plants.',
-      price: '\$7.49',
-      rating: 4.5,
-      reviewCount: 12600,
-      imageUrl: _img('photo-1509423350716-97f9360b4e09', 'prod_jobes_spikes'),
-      asin: 'B000UGBGSO',
+          'Feeds all indoor houseplants including pothos, monstera, and ferns for up to 2 full months. Contains micronutrients to encourage vibrant green foliage and root growth. Safe for all potted plants when used as directed.',
+      price: '\$6.99',
+      rating: 4.7,
+      reviewCount: 15800,
+      imageUrl: _img('photo-1416879595882-3373a0480b5b', 'prod_plant_food_spikes'),
+      asin: 'B001V57M52',
       category: 'Fertilizers & Soil',
+    ),
+    ShopProduct(
+      id: 'prod_leaf_shine',
+      title: 'Miracle-Gro Leaf Shine Spray & Cleaner',
+      description:
+          'Water-based foliage spray that creates a natural, glossy shine on hard-surfaced houseplant leaves. Cleans away dust, water spots, and mineral buildup while keeping stomata unclogged for healthy leaf transpiration.',
+      price: '\$9.49',
+      rating: 4.6,
+      reviewCount: 6420,
+      imageUrl: _img('photo-1574671235952-f6c15a4ebf33', 'prod_leaf_shine'),
+      asin: 'B000OWB4O6',
+      category: 'Pest & Disease Control',
     ),
   ];
 }

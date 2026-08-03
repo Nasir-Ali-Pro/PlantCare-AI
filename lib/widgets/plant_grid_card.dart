@@ -103,7 +103,53 @@ class PlantGridCard extends StatelessWidget {
                             ),
                     ),
                   ),
-                  // Health badge
+                  // Notification Bell Badge (Top Left)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: GestureDetector(
+                      onTap: () {
+                        // Capture the NEW state before toggling
+                        final willEnable = !plant.notificationsEnabled;
+                        provider.togglePlantNotifications(plant.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              willEnable
+                                  ? 'Reminders enabled for ${plant.nickname}'
+                                  : 'Reminders muted for ${plant.nickname}',
+                            ),
+                            backgroundColor: AppColors.primary,
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withValues(alpha: 0.6),
+                          border: Border.all(
+                            color: plant.notificationsEnabled
+                                ? AppTheme.primaryGreen.withValues(alpha: 0.6)
+                                : Colors.white.withValues(alpha: 0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          plant.notificationsEnabled
+                              ? Icons.notifications_active_rounded
+                              : Icons.notifications_off_rounded,
+                          size: 16,
+                          color: plant.notificationsEnabled
+                              ? AppTheme.primaryGreen
+                              : Colors.white.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Health badge (Top Right)
                   Positioned(
                     top: 8,
                     right: 8,

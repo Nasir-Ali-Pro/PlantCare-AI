@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
@@ -205,15 +205,19 @@ class _AuthScreenState extends State<AuthScreen> {
                           color: AppColors.primary.withValues(alpha: 0.08),
                           border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
                         ),
-                        child: const Icon(
-                          Icons.eco_rounded,
-                          size: 55,
-                          color: AppColors.primary,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.asset(
+                            'assets/images/app_logo.png',
+                            width: 65,
+                            height: 65,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ).animate().scale(duration: 300.ms, curve: Curves.easeOut),
                       const SizedBox(height: 16),
                       Text(
-                        'PlantCare',
+                        'PlantCare AI',
                         style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28),
                       ),
                       const SizedBox(height: 6),

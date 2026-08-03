@@ -215,15 +215,22 @@ class _ForumScreenState extends State<ForumScreen> {
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 12),
-              ...reasons.map((r) => RadioListTile<String>(
-                value: r,
+              RadioGroup<String>(
                 groupValue: selectedReason,
-                onChanged: (v) => setDialogState(() => selectedReason = v!),
-                title: Text(r, style: const TextStyle(color: Colors.white, fontSize: 13)),
-                activeColor: const Color(0xFF22C55E),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-              )),
+                onChanged: (v) {
+                  if (v != null) setDialogState(() => selectedReason = v);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: reasons.map((r) => RadioListTile<String>(
+                    value: r,
+                    title: Text(r, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    activeColor: const Color(0xFF22C55E),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  )).toList(),
+                ),
+              ),
             ],
           ),
           actions: [

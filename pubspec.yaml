@@ -62,4 +62,5 @@ flutter:
 
   assets:
     - assets/data/treatment_data.json
+    - assets/images/
     - assets/images/shop/

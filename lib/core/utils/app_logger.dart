@@ -1,8 +1,8 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 /// Production-safe logger — only outputs in debug builds.
 class AppLogger {
-  static const String _prefix = '🌿 PlantCare';
+  static const String _prefix = '🌿 PlantCare AI';
 
   static void info(String message) {
     if (kDebugMode) debugPrint('$_prefix [INFO] $message');

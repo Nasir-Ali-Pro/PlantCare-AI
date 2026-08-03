@@ -9,7 +9,7 @@ import 'providers/diagnosis_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/garden_provider.dart';
 import 'providers/shop_provider.dart';
-import 'screens/main_navigation_shell.dart';
+import 'screens/splash/splash_screen.dart';
 import 'screens/legal/legal_screen.dart';
 import 'services/notification_service.dart';
 
@@ -38,9 +38,12 @@ void main() async {
 
       runApp(const PlantCareApp());
 
-      // Request notification permissions after the first frame (shows system dialog)
+      // Request notification permissions after the first frame & configure tap handler
       WidgetsBinding.instance.addPostFrameCallback((_) {
         NotificationService().requestPermissions();
+        NotificationService.onNotificationTap = (plantId, type) {
+          debugPrint('🔔 Notification tapped in app shell: plantId=$plantId, type=$type');
+        };
       });
     },
     (error, stackTrace) {
@@ -79,7 +82,7 @@ class PlantCareApp extends StatelessWidget {
         title: 'PlantCare AI',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: const MainNavigationShell(),
+        home: const SplashScreen(),
         routes: {
           '/privacy-policy': (ctx) => const LegalScreen(isPrivacyPolicy: true),
           '/terms-of-service': (ctx) => const LegalScreen(isPrivacyPolicy: false),

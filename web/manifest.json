@@ -1,6 +1,6 @@
 {
-    "name": "plantcare_ai",
-    "short_name": "plantcare_ai",
+    "name": "PlantCare AI",
+    "short_name": "PlantCare AI",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

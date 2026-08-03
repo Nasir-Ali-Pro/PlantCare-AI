@@ -727,47 +727,32 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildProductImage(ShopProduct product, {double iconSize = 40, BoxFit fit = BoxFit.contain}) {
-    final isTesting = WidgetsBinding.instance.runtimeType.toString().contains('Test');
     final assetPath = 'assets/images/shop/${product.id}.jpg';
 
-    if (isTesting) {
-      return Image.asset(
-        assetPath,
-        fit: fit,
-        errorBuilder: (context, err, stack) {
-          return Center(
-            child: Icon(
-              Icons.local_florist_rounded,
-              color: AppColors.primary,
-              size: iconSize,
-            ),
-          );
-        },
-      );
-    }
-
-    return CachedNetworkImage(
-      imageUrl: product.imageUrl,
+    return Image.asset(
+      assetPath,
       fit: fit,
-      placeholder: (context, url) => Shimmer.fromColors(
-        enabled: !isTesting,
-        baseColor: AppColors.surfaceHighlight,
-        highlightColor: AppColors.borderLight,
-        child: Container(color: AppColors.backgroundLight),
-      ),
-      errorWidget: (context, url, error) {
-        return Image.asset(
-          assetPath,
-          fit: fit,
-          errorBuilder: (context, err, stack) {
-            return Center(
+      errorBuilder: (context, err, stack) {
+        if (product.imageUrl.isNotEmpty && product.imageUrl.startsWith('http')) {
+          return CachedNetworkImage(
+            imageUrl: product.imageUrl,
+            fit: fit,
+            placeholder: (context, url) => Container(color: AppColors.backgroundLight),
+            errorWidget: (context, url, error) => Center(
               child: Icon(
                 Icons.local_florist_rounded,
                 color: AppColors.primary,
                 size: iconSize,
               ),
-            );
-          },
+            ),
+          );
+        }
+        return Center(
+          child: Icon(
+            Icons.local_florist_rounded,
+            color: AppColors.primary,
+            size: iconSize,
+          ),
         );
       },
     );

@@ -153,6 +153,52 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
           ),
           actions: [
             IconButton(
+              icon: Icon(
+                Icons.alarm_rounded,
+                color: AppTheme.primaryGreen.withValues(alpha: 0.9),
+                size: 22,
+              ),
+              tooltip: 'Reminder Time',
+              onPressed: () async {
+                final provider = Provider.of<GardenProvider>(context, listen: false);
+                final initialTime = TimeOfDay(
+                  hour: provider.reminderHour,
+                  minute: provider.reminderMinute,
+                );
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: initialTime,
+                  helpText: 'SET DAILY REMINDER TIME',
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.dark(
+                          primary: AppTheme.primaryGreen,
+                          onPrimary: Colors.white,
+                          surface: const Color(0xFF1E293B),
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (picked != null) {
+                  await provider.setReminderTime(picked.hour, picked.minute);
+                  if (context.mounted) {
+                    final timeStr = picked.format(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Daily care reminders set to $timeStr'),
+                        backgroundColor: AppTheme.primaryGreen,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.forum_rounded, color: Colors.white70),
               tooltip: 'Community Forum',
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForumScreen())),
@@ -734,6 +780,96 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
                                       ),
                                     ],
                                   ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // ─ Push Reminders Card
+                            AppCard(
+                              borderRadius: 18,
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        currentPlant.notificationsEnabled
+                                            ? Icons.notifications_active_rounded
+                                            : Icons.notifications_off_rounded,
+                                        size: 16,
+                                        color: currentPlant.notificationsEnabled
+                                            ? AppTheme.primaryGreen
+                                            : Colors.white.withValues(alpha: 0.4),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'PUSH REMINDERS',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1.2,
+                                          color: Colors.white.withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Switch(
+                                        value: currentPlant.notificationsEnabled,
+                                        activeThumbColor: AppTheme.primaryGreen,
+                                        onChanged: (val) {
+                                          provider.togglePlantNotifications(currentPlant.id);
+                                          setModalState(() {});
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    currentPlant.notificationsEnabled
+                                        ? 'Daily notifications scheduled for ${TimeOfDay(hour: provider.reminderHour, minute: provider.reminderMinute).format(context)}'
+                                        : 'Notifications are muted for this plant.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: currentPlant.notificationsEnabled
+                                          ? Colors.white.withValues(alpha: 0.75)
+                                          : Colors.white.withValues(alpha: 0.4),
+                                    ),
+                                  ),
+                                  if (currentPlant.notificationsEnabled) ...[
+                                    const SizedBox(height: 10),
+                                    Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.water_drop_rounded, size: 14, color: AppTheme.primaryGreen),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Next Water: ',
+                                          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5)),
+                                        ),
+                                        Text(
+                                          _formatDate(currentPlant.lastWatered.add(Duration(days: currentPlant.wateringFrequencyDays))),
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.science_rounded, size: 14, color: AppTheme.accentAmber),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Next Fertilize: ',
+                                          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5)),
+                                        ),
+                                        Text(
+                                          _formatDate(currentPlant.lastFertilized.add(Duration(days: currentPlant.fertilizingFrequencyDays))),
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

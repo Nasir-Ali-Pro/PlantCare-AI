@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+import '../models/garden_plant.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -12,12 +15,49 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
+  // ── Reminder Time State (persisted) ──────────────────────
+
+  int _reminderHour = 9;
+  int _reminderMinute = 0;
+
+  int get reminderHour => _reminderHour;
+  int get reminderMinute => _reminderMinute;
+
+  /// Load the user's saved reminder time from SharedPreferences.
+  /// Call once at startup before scheduling any notifications.
+  Future<void> loadReminderTime() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _reminderHour = prefs.getInt('notif_reminder_hour') ?? 9;
+      _reminderMinute = prefs.getInt('notif_reminder_minute') ?? 0;
+      debugPrint('🔔 Reminder time loaded: $_reminderHour:${_reminderMinute.toString().padLeft(2, '0')}');
+    } catch (e) {
+      debugPrint('⚠️ Failed to load reminder time: $e');
+    }
+  }
+
+  /// Persist the user's preferred daily reminder time.
+  /// After calling this, you should call [rescheduleAllReminders] to apply.
+  Future<void> saveReminderTime(int hour, int minute) async {
+    _reminderHour = hour;
+    _reminderMinute = minute;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('notif_reminder_hour', hour);
+      await prefs.setInt('notif_reminder_minute', minute);
+      debugPrint('🔔 Reminder time saved: $hour:${minute.toString().padLeft(2, '0')}');
+    } catch (e) {
+      debugPrint('⚠️ Failed to save reminder time: $e');
+    }
+  }
+
   // ── Initialization ────────────────────────────────────────
 
   Future<void> init() async {
     if (_initialized) return;
 
     tz.initializeTimeZones();
+    await loadReminderTime();
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
@@ -116,20 +156,19 @@ class NotificationService {
     return ((hash + type * 1000003) & 0x7FFFFFFF);
   }
 
-  // ── Morning-Time Snapping ─────────────────────────────────
+  // ── Time Snapping ─────────────────────────────────────────
 
-  /// Snaps a given [targetDate] to 9:00 AM on the same calendar day.
-  /// If 9 AM on that day has already passed, pushes to 9 AM the next day.
-  DateTime _snapToMorning(DateTime targetDate) {
+  /// Snaps a given [targetDate] to the user's configured reminder hour/minute.
+  /// If that time on the target day has already passed, pushes to the next day.
+  DateTime _snapToReminderTime(DateTime targetDate) {
     final candidate = DateTime(
       targetDate.year,
       targetDate.month,
       targetDate.day,
-      9, // 9:00 AM
-      0,
+      _reminderHour,
+      _reminderMinute,
       0,
     );
-    // If 9 AM today has already passed, schedule for 9 AM tomorrow
     if (candidate.isBefore(DateTime.now())) {
       return candidate.add(const Duration(days: 1));
     }
@@ -163,7 +202,7 @@ class NotificationService {
     final id = _getNotificationId(plantId, 1);
     final base = fromDate ?? DateTime.now();
     final rawDue = base.add(Duration(days: days));
-    final scheduledDate = _snapToMorning(rawDue);
+    final scheduledDate = _snapToReminderTime(rawDue);
 
     try {
       await _localNotifications.cancel(id);
@@ -221,7 +260,7 @@ class NotificationService {
     final id = _getNotificationId(plantId, 2);
     final base = fromDate ?? DateTime.now();
     final rawDue = base.add(Duration(days: days));
-    final scheduledDate = _snapToMorning(rawDue);
+    final scheduledDate = _snapToReminderTime(rawDue);
 
     try {
       await _localNotifications.cancel(id);
@@ -255,6 +294,72 @@ class NotificationService {
     } catch (e) {
       debugPrint('⚠️ Failed to schedule fertilizing reminder: $e');
     }
+  }
+
+  // ── Batch Reschedule (Cold-Start Recovery) ────────────────
+
+  /// Reschedules ALL plant reminders from scratch.
+  ///
+  /// Call this on every app cold start to recover from OS-cancelled notifications
+  /// (phone restarts, OS-killed background tasks).
+  ///
+  /// Plants with [notificationsEnabled] = false are skipped (reminders cancelled).
+  Future<void> rescheduleAllReminders(List<GardenPlant> plants) async {
+    await init();
+    if (!_initialized) return;
+
+    debugPrint('🔔 Rescheduling reminders for ${plants.length} plant(s)...');
+    for (final plant in plants) {
+      if (!plant.notificationsEnabled) {
+        await cancelReminders(plant.id);
+        continue;
+      }
+
+      // Anchor watering reminder to lastWatered so it reflects actual next due date
+      await scheduleWateringReminder(
+        plant.id,
+        plant.nickname,
+        plant.wateringFrequencyDays,
+        fromDate: plant.lastWatered,
+      );
+
+      // Anchor fertilizing reminder to lastFertilized
+      await scheduleFertilizingReminder(
+        plant.id,
+        plant.nickname,
+        plant.fertilizingFrequencyDays,
+        fromDate: plant.lastFertilized,
+      );
+    }
+    debugPrint('🔔 All reminders rescheduled successfully.');
+  }
+
+  // ── Pending Notification Inspection ──────────────────────
+
+  /// Returns the list of currently pending notification IDs.
+  /// Useful for confirming a plant's reminder is active.
+  Future<List<int>> getPendingNotificationIds() async {
+    await init();
+    if (!_initialized) return [];
+    try {
+      final pending = await _localNotifications.pendingNotificationRequests();
+      return pending.map((n) => n.id).toList();
+    } catch (e) {
+      debugPrint('⚠️ getPendingNotificationIds failed: $e');
+      return [];
+    }
+  }
+
+  /// Returns true if a watering reminder is currently pending for the given plant.
+  Future<bool> isWateringReminderPending(String plantId) async {
+    final ids = await getPendingNotificationIds();
+    return ids.contains(_getNotificationId(plantId, 1));
+  }
+
+  /// Returns true if a fertilizing reminder is currently pending for the given plant.
+  Future<bool> isFertilizingReminderPending(String plantId) async {
+    final ids = await getPendingNotificationIds();
+    return ids.contains(_getNotificationId(plantId, 2));
   }
 
   // ── Cancel Reminders ──────────────────────────────────────

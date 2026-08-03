@@ -604,11 +604,25 @@ class SupabaseService {
         return ShopProduct.defaultProducts;
       }
 
-      final products = response
-          .map((item) => ShopProduct.fromJson(item as Map<String, dynamic>))
+      final remoteProducts = response
+          .map((item) => ShopProduct.fromJson(item))
           .toList();
-      debugPrint('🛍️ Loaded ${products.length} products from Supabase.');
-      return products;
+
+      final defaultMap = {for (var p in ShopProduct.defaultProducts) p.id: p};
+
+      // Always prioritize our verified local catalog items with pristine asset photos and valid ASINs
+      final List<ShopProduct> merged = [];
+      for (var defaultProd in ShopProduct.defaultProducts) {
+        merged.add(defaultProd);
+      }
+      for (var remote in remoteProducts) {
+        if (!defaultMap.containsKey(remote.id)) {
+          merged.add(remote);
+        }
+      }
+
+      debugPrint('🛍️ Loaded ${merged.length} products (authoritative local catalog prioritized).');
+      return merged;
     } catch (e) {
       debugPrint('⚠️ shop_products fetch failed: $e. Using local defaults.');
       return ShopProduct.defaultProducts;

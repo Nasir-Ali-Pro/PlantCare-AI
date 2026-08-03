@@ -227,10 +227,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: AppTheme.primaryGreen.withValues(alpha: 0.08),
               border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2), width: 1.5),
             ),
-            child: const Icon(
-              Icons.spa_rounded,
-              size: 70,
-              color: AppTheme.primaryGreen,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 85,
+                height: 85,
+                fit: BoxFit.cover,
+              ),
             ),
           ).animate().scale(duration: 600.ms, curve: Curves.bounceOut),
           const SizedBox(height: 30),

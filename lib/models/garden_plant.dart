@@ -79,6 +79,10 @@ class GardenPlant {
   /// Use [computedHealthScore] for display to incorporate time-based decay.
   int healthScore;
 
+  /// Whether push reminders are enabled for this individual plant.
+  /// Defaults to true — existing plants automatically get reminders.
+  bool notificationsEnabled;
+
   List<JournalEntry> journal;
   final List<int> healthHistory;
 
@@ -96,6 +100,7 @@ class GardenPlant {
     this.fertilizingFrequencyDays = 30,
     this.notes = '',
     this.healthScore = 100,
+    this.notificationsEnabled = true,
     List<int>? healthHistory,
   }) : healthHistory = healthHistory?.isNotEmpty == true
             ? healthHistory!
@@ -190,6 +195,7 @@ class GardenPlant {
     int? fertilizingFrequencyDays,
     String? notes,
     int? healthScore,
+    bool? notificationsEnabled,
     List<JournalEntry>? journal,
     List<int>? healthHistory,
   }) {
@@ -206,6 +212,7 @@ class GardenPlant {
       fertilizingFrequencyDays: fertilizingFrequencyDays ?? this.fertilizingFrequencyDays,
       notes: notes ?? this.notes,
       healthScore: healthScore ?? this.healthScore,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       journal: journal ?? List.from(this.journal),
       healthHistory: healthHistory ?? List.from(this.healthHistory),
     );
@@ -227,6 +234,7 @@ class GardenPlant {
       'fertilizingFrequencyDays': fertilizingFrequencyDays,
       'notes': notes,
       'healthScore': healthScore,
+      'notificationsEnabled': notificationsEnabled,
       'journal': journal.map((e) => e.toJson()).toList(),
       'healthHistory': healthHistory,
     };
@@ -257,6 +265,8 @@ class GardenPlant {
       fertilizingFrequencyDays: (json['fertilizingFrequencyDays'] as int?) ?? 30,
       notes: json['notes'] as String? ?? '',
       healthScore: score,
+      // Default true for backward compat — existing plants get notifications
+      notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
       journal: (json['journal'] as List?)
               ?.map((e) => JournalEntry.fromJson(e as Map<String, dynamic>))
               .toList() ??

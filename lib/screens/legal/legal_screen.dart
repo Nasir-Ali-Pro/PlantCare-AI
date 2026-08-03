@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/app_card.dart';
@@ -71,7 +71,7 @@ class LegalScreen extends StatelessWidget {
   }
 
   static const String _privacyPolicyText = '''
-Welcome to PlantCareAI. We are committed to protecting your personal information and your right to privacy.
+Welcome to PlantCare AI. We are committed to protecting your personal information and your right to privacy.
 
 1. INFORMATION WE COLLECT
 
@@ -115,15 +115,15 @@ For questions, contact us at privacy@plantcareai.app
 ''';
 
   static const String _termsText = '''
-By using PlantCareAI ("App"), you agree to these Terms of Service.
+By using PlantCare AI ("App"), you agree to these Terms of Service.
 
 1. ACCEPTANCE OF TERMS
 
-By downloading, installing, or using PlantCareAI, you agree to be bound by these Terms.
+By downloading, installing, or using PlantCare AI, you agree to be bound by these Terms.
 
 2. USE OF THE APP
 
-You may use PlantCareAI for personal, non-commercial use. You agree not to:
+You may use PlantCare AI for personal, non-commercial use. You agree not to:
 • Use the App for any unlawful purpose
 • Attempt to reverse engineer or copy the App
 • Upload harmful, illegal, or inappropriate content
@@ -131,7 +131,7 @@ You may use PlantCareAI for personal, non-commercial use. You agree not to:
 
 3. AI DISCLAIMER
 
-PlantCareAI uses AI for plant diagnosis. Results are informational only and should not replace professional agricultural advice. We make no guarantees about the accuracy of AI-generated diagnoses.
+PlantCare AI uses AI for plant diagnosis. Results are informational only and should not replace professional agricultural advice. We make no guarantees about the accuracy of AI-generated diagnoses.
 
 4. AFFILIATE DISCLOSURE
 
@@ -139,11 +139,11 @@ The Shop section contains affiliate links to third-party products. We may earn a
 
 5. INTELLECTUAL PROPERTY
 
-All content, trademarks, and features of PlantCareAI are owned by or licensed to us.
+All content, trademarks, and features of PlantCare AI are owned by or licensed to us.
 
 6. LIMITATION OF LIABILITY
 
-To the maximum extent permitted by law, PlantCareAI shall not be liable for any indirect, incidental, or consequential damages from your use of the App.
+To the maximum extent permitted by law, PlantCare AI shall not be liable for any indirect, incidental, or consequential damages from your use of the App.
 
 7. CONTACT US
 
