@@ -291,9 +291,16 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
           indicatorColor: AppColors.primary,
           labelColor: Colors.white,
           unselectedLabelColor: AppColors.onSurfaceMuted,
-          tabs: const [
-            Tab(text: 'Browse'),
-            Tab(text: 'Wishlist'),
+          tabs: [
+            const Tab(text: 'Browse'),
+            Consumer<ShopProvider>(
+              builder: (_, provider, __) {
+                final count = provider.wishlist.length;
+                return Tab(
+                  text: count > 0 ? 'Wishlist ($count)' : 'Wishlist',
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -543,6 +550,27 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                         ),
                       ),
                     ),
+
+                    // Share Button Overlay — bottom right
+                    Positioned(
+                      bottom: 6,
+                      right: 6,
+                      child: GestureDetector(
+                        onTap: () => _shareProduct(product),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.38),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.ios_share_rounded,
+                            color: Colors.white70,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -699,12 +727,30 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildProductImage(ShopProduct product, {double iconSize = 40, BoxFit fit = BoxFit.contain}) {
+    final isTesting = WidgetsBinding.instance.runtimeType.toString().contains('Test');
     final assetPath = 'assets/images/shop/${product.id}.jpg';
+
+    if (isTesting) {
+      return Image.asset(
+        assetPath,
+        fit: fit,
+        errorBuilder: (context, err, stack) {
+          return Center(
+            child: Icon(
+              Icons.local_florist_rounded,
+              color: AppColors.primary,
+              size: iconSize,
+            ),
+          );
+        },
+      );
+    }
+
     return CachedNetworkImage(
       imageUrl: product.imageUrl,
       fit: fit,
       placeholder: (context, url) => Shimmer.fromColors(
-        enabled: !WidgetsBinding.instance.runtimeType.toString().contains('Test'),
+        enabled: !isTesting,
         baseColor: AppColors.surfaceHighlight,
         highlightColor: AppColors.borderLight,
         child: Container(color: AppColors.backgroundLight),

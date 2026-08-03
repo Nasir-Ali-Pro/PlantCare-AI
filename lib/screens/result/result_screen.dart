@@ -873,28 +873,104 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
+  /// Returns the most relevant shop products for a given diagnosis.
+  /// Uses tiered keyword matching against disease/pest/care categories.
   List<ShopProduct> _getRecommendedProducts(String diseaseName) {
     final name = diseaseName.toLowerCase();
     final allProds = ShopProduct.defaultProducts;
-    
-    if (name.contains('fungal') || name.contains('mildew') || name.contains('rust') || 
-        name.contains('blight') || name.contains('spot') || name.contains('scab') || name.contains('mold')) {
-      return allProds.where((p) => p.id == 'prod_neem_oil' || p.id == 'prod_copper_fungicide').toList();
-    } else if (name.contains('rot') || name.contains('damping') || name.contains('wilt')) {
-      return allProds.where((p) => p.id == 'prod_copper_fungicide' || p.id == 'prod_moisture_meter').toList();
-    } else if (name.contains('pest') || name.contains('aphid') || name.contains('mite') || 
-               name.contains('scale') || name.contains('bug') || name.contains('thrip') || 
-               name.contains('insect') || name.contains('caterpillar') || name.contains('gnat')) {
-      return allProds.where((p) => p.id == 'prod_neem_oil' || p.id == 'prod_systemic_pest').toList();
-    } else if (name.contains('nutrient') || name.contains('deficiency') || 
-               name.contains('chlorosis') || name.contains('nitrogen')) {
-      return allProds.where((p) => p.id == 'prod_miracle_gro' || p.id == 'prod_soil_mix').toList();
-    } else if (name == 'healthy') {
-      return allProds.where((p) => p.id == 'prod_moisture_meter' || p.id == 'prod_miracle_gro').toList();
+
+    // ── Fungal / Mold / Mildew ─────────────────────────────
+    if (name.contains('fungal') || name.contains('mildew') ||
+        name.contains('rust') || name.contains('blight') ||
+        name.contains('spot') || name.contains('scab') ||
+        name.contains('mold') || name.contains('anthracnose') ||
+        name.contains('leaf curl') || name.contains('downy')) {
+      return allProds
+          .where((p) =>
+              p.id == 'prod_neem_oil' ||
+              p.id == 'prod_copper_fungicide' ||
+              p.id == 'prod_systemic_pest')
+          .toList();
     }
-    
-    // General fallback
-    return allProds.where((p) => p.id == 'prod_neem_oil' || p.id == 'prod_moisture_meter').toList();
+
+    // ── Root Rot / Stem Rot / Wilt ─────────────────────────
+    if (name.contains('rot') || name.contains('damping') ||
+        name.contains('wilt') || name.contains('crown rot') ||
+        name.contains('pythium') || name.contains('phytophthora')) {
+      return allProds
+          .where((p) =>
+              p.id == 'prod_copper_fungicide' ||
+              p.id == 'prod_moisture_meter' ||
+              p.id == 'prod_perlite')
+          .toList();
+    }
+
+    // ── Insect Pests ───────────────────────────────────────
+    if (name.contains('pest') || name.contains('aphid') ||
+        name.contains('mite') || name.contains('scale') ||
+        name.contains('bug') || name.contains('thrip') ||
+        name.contains('insect') || name.contains('caterpillar') ||
+        name.contains('gnat') || name.contains('whitefly') ||
+        name.contains('mealybug') || name.contains('leafhopper')) {
+      return allProds
+          .where((p) =>
+              p.id == 'prod_neem_oil' ||
+              p.id == 'prod_systemic_pest' ||
+              p.id == 'prod_insect_soap')
+          .toList();
+    }
+
+    // ── Nutrient Deficiency ────────────────────────────────
+    if (name.contains('nutrient') || name.contains('deficiency') ||
+        name.contains('chlorosis') || name.contains('nitrogen') ||
+        name.contains('yellowing') || name.contains('pale')) {
+      return allProds
+          .where((p) =>
+              p.id == 'prod_miracle_gro' ||
+              p.id == 'prod_osmocote' ||
+              p.id == 'prod_jobes_spikes')
+          .toList();
+    }
+
+    // ── Watering / Overwatering ────────────────────────────
+    if (name.contains('overwatering') || name.contains('dehydration') ||
+        name.contains('wilting') || name.contains('drought')) {
+      return allProds
+          .where((p) =>
+              p.id == 'prod_moisture_meter' ||
+              p.id == 'prod_self_watering_pots' ||
+              p.id == 'prod_watering_can')
+          .toList();
+    }
+
+    // ── Healthy Plant — General care recommendations ────────
+    if (name == 'healthy') {
+      return allProds
+          .where((p) =>
+              p.id == 'prod_moisture_meter' ||
+              p.id == 'prod_miracle_gro' ||
+              p.id == 'prod_superthrive')
+          .toList();
+    }
+
+    // ── Species Identification — propagation and growth ────
+    if (name.contains('identified species') || name.contains('monstera') ||
+        name.contains('pothos') || name.contains('philodendron') ||
+        name.contains('ficus') || name.contains('succulent')) {
+      return allProds
+          .where((p) =>
+              p.id == 'prod_propagation_station' ||
+              p.id == 'prod_rooting_powder' ||
+              p.id == 'prod_soil_mix')
+          .toList();
+    }
+
+    // ── General fallback ───────────────────────────────────
+    return allProds
+        .where((p) =>
+            p.id == 'prod_neem_oil' ||
+            p.id == 'prod_moisture_meter')
+        .toList();
   }
 
   Widget _buildRecommendedProductsSection(BuildContext context, String diseaseName) {
@@ -906,21 +982,70 @@ class ResultScreen extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.shopping_bag_rounded, color: AppColors.accent, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Recommended Supplies & Treatment',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+            // ── Section Header ──────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.15),
+                    AppColors.accent.withValues(alpha: 0.08),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
-              ],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.shopping_bag_rounded,
+                      color: AppColors.accent,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'RECOMMENDED SUPPLIES',
+                          style: TextStyle(
+                            color: AppColors.accentLight,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Products selected for your diagnosis',
+                          style: TextStyle(
+                            color: AppColors.onSurface.withValues(alpha: 0.7),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
+
             const SizedBox(height: 12),
+
+            // ── Product Cards ───────────────────────────────────
             ...recommended.map((product) {
               final isFav = provider.isFavorite(product.id);
               return Padding(
@@ -933,8 +1058,8 @@ class ResultScreen extends StatelessWidget {
                     children: [
                       // Product Mini Image
                       Container(
-                        width: 60,
-                        height: 60,
+                        width: 64,
+                        height: 64,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
@@ -952,11 +1077,11 @@ class ResultScreen extends StatelessWidget {
                                 color: AppColors.backgroundLight,
                               ),
                             ),
-                            errorWidget: (context, url, error) => const Center(
+                            errorWidget: (context, url, error) => Center(
                               child: Icon(
                                 Icons.local_florist_rounded,
                                 color: AppColors.primary,
-                                size: 24,
+                                size: 28,
                               ),
                             ),
                           ),
@@ -976,10 +1101,10 @@ class ResultScreen extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
                                 Text(
@@ -990,8 +1115,9 @@ class ResultScreen extends StatelessWidget {
                                     fontSize: 13,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                const Icon(Icons.star_rounded, color: AppColors.warning, size: 14),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.star_rounded,
+                                    color: AppColors.warning, size: 13),
                                 const SizedBox(width: 2),
                                 Text(
                                   '${product.rating}',
@@ -1006,45 +1132,130 @@ class ResultScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 4),
 
-                      // Wishlist heart
-                      IconButton(
-                        icon: Icon(
-                          isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          color: isFav ? Colors.red : Colors.white70,
-                          size: 20,
-                        ),
-                        onPressed: () => provider.toggleFavorite(product.id),
+                      // Action buttons column
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Wishlist Heart
+                          GestureDetector(
+                            onTap: () => provider.toggleFavorite(product.id),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: isFav
+                                    ? Colors.red.withValues(alpha: 0.12)
+                                    : Colors.transparent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isFav
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                color: isFav ? Colors.red : Colors.white54,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+
+                          // Share Button (Feature 2)
+                          GestureDetector(
+                            onTap: () {
+                              final shareText =
+                                  'Check out this plant treatment product from PlantCare AI:\n\n'
+                                  '${product.title}\n'
+                                  'Price: ${product.price} | ⭐ ${product.rating}\n\n'
+                                  '${product.affiliateUrl}';
+                              Share.share(shareText, subject: product.title);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              child: const Icon(
+                                Icons.ios_share_rounded,
+                                color: Colors.white38,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
 
-                      // Buy Button
+                      const SizedBox(width: 4),
+
+                      // Buy on Amazon button
                       ElevatedButton(
-                        onPressed: () => provider.logClickAndLaunch(product.id, product.asin),
+                        onPressed: () =>
+                            provider.logClickAndLaunch(product.id, product.asin),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
                           foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          elevation: 0,
                         ),
                         child: const Text(
                           'Buy',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ),
                 ),
               );
-            }).toList(),
-            // Amazon Affiliate Disclosure
+            }),
+
+            // ── Amazon Affiliate Disclosure ─────────────────────
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 4.0),
               child: Text(
                 '*As an Amazon Associate, we earn from qualifying purchases.',
-                style: TextStyle(color: Colors.white30, fontSize: 10, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                    color: Colors.white30,
+                    fontSize: 10,
+                    fontStyle: FontStyle.italic),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Feature 1: View All in Shop CTA ────────────────
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MainNavigationShell(initialIndex: 4),
+                  ),
+                  (route) => false,
+                );
+              },
+              icon: const Icon(
+                Icons.storefront_rounded,
+                size: 16,
+                color: AppColors.accentLight,
+              ),
+              label: const Text(
+                'Browse Full Plant Supply Shop',
+                style: TextStyle(
+                  color: AppColors.accentLight,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: AppColors.accent.withValues(alpha: 0.5),
+                  width: 1.2,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],

@@ -7,6 +7,7 @@ import '../core/theme/app_colors.dart';
 import '../providers/diagnosis_provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/garden_provider.dart';
+import '../providers/shop_provider.dart';
 import 'home/home_screen.dart';
 import 'garden/my_garden_screen.dart';
 import 'chat/chat_screen.dart';
@@ -145,7 +146,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                           _buildNavItem(1, Icons.yard_rounded, Icons.yard_outlined, 'Garden'),
                           _buildNavItem(2, Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'AI Care'),
                           _buildNavItem(3, Icons.menu_book_rounded, Icons.menu_book_outlined, 'Explore'),
-                          _buildNavItem(4, Icons.shopping_bag_rounded, Icons.shopping_bag_outlined, 'Shop'),
+                          Consumer<ShopProvider>(
+                            builder: (_, shopProvider, __) => _buildNavItem(
+                              4,
+                              Icons.shopping_bag_rounded,
+                              Icons.shopping_bag_outlined,
+                              'Shop',
+                              badgeCount: shopProvider.wishlist.length,
+                            ),
+                          ),
                           _buildNavItem(5, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
                         ],
                       ),
@@ -160,7 +169,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData filledIcon, IconData outlinedIcon, String label) {
+  Widget _buildNavItem(
+    int index,
+    IconData filledIcon,
+    IconData outlinedIcon,
+    String label, {
+    int badgeCount = 0,
+  }) {
     final isSelected = _currentIndex == index;
 
     return Expanded(
@@ -181,10 +196,56 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isSelected ? filledIcon : outlinedIcon,
-                color: isSelected ? AppColors.primary : AppColors.onSurfaceFaint,
-                size: 24,
+              // Icon with optional badge overlay
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    isSelected ? filledIcon : outlinedIcon,
+                    color: isSelected ? AppColors.primary : AppColors.onSurfaceFaint,
+                    size: 24,
+                  ),
+                  if (badgeCount > 0)
+                    Positioned(
+                      top: -5,
+                      right: -8,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.elasticOut,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: badgeCount > 9 ? 4.0 : 5.0,
+                          vertical: 2.0,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.danger,
+                              AppColors.danger.withValues(alpha: 0.85),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.danger.withValues(alpha: 0.5),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          badgeCount > 99 ? '99+' : '$badgeCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 4),
               if (isSelected)
