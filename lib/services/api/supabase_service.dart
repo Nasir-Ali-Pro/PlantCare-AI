@@ -616,9 +616,28 @@ class SupabaseService {
   }
 
 
+  /// Ensures the public Supabase Storage bucket 'shop_products' exists.
+  Future<void> ensureShopStorageBucket() async {
+    if (!_isInitialized) return;
+    try {
+      final buckets = await client.storage.listBuckets();
+      final exists = buckets.any((b) => b.name == 'shop_products');
+      if (!exists) {
+        await client.storage.createBucket(
+          'shop_products',
+          const BucketOptions(public: true),
+        );
+        debugPrint("🪣 Created public Supabase Storage bucket 'shop_products'");
+      }
+    } catch (e) {
+      debugPrint("⚠️ Supabase Storage bucket check/creation skipped: $e");
+    }
+  }
+
   /// Seeds default products to Supabase shop_products table if it exists and is empty.
   Future<void> seedShopProductsIfEmpty() async {
     if (!_isInitialized) return;
+    await ensureShopStorageBucket();
     try {
       final countResponse = await client
           .from('shop_products')
