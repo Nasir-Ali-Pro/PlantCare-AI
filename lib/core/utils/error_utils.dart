@@ -50,8 +50,7 @@ class AppErrorUtils {
         errStr.contains('unauthorized') ||
         errStr.contains('permission_denied') ||
         errStr.contains('401') ||
-        errStr.contains('403') ||
-        errStr.contains('invalid credentials')) {
+        errStr.contains('403')) {
       return "🔑 Authentication Failed. Please check your API key or credentials in settings.";
     }
 
@@ -72,11 +71,15 @@ class AppErrorUtils {
     }
 
     // 7. Supabase Database & Auth Errors
-    if (errStr.contains('user_not_found') || errStr.contains('invalid login credentials')) {
-      return "🔒 Invalid email or password. Please check your credentials and try again.";
+    if (errStr.contains('user_not_found') ||
+        errStr.contains('invalid login credentials') ||
+        errStr.contains('invalid_credentials')) {
+      return "🔒 Invalid email or password. Please double-check your credentials and try again.";
     }
-    if (errStr.contains('user already registered') || errStr.contains('email_exists')) {
-      return "✉️ An account with this email already exists. Please log in instead.";
+    if (errStr.contains('user already registered') ||
+        errStr.contains('email_exists') ||
+        errStr.contains('already in use')) {
+      return "✉️ An account with this email address already exists. Please sign in instead.";
     }
 
     // 8. Custom user-facing Exception messages (if already formatted cleanly without technical stacktraces)
@@ -85,6 +88,7 @@ class AppErrorUtils {
       if (!cleanMsg.contains('SocketException') &&
           !cleanMsg.contains('ClientException') &&
           !cleanMsg.contains('HttpException') &&
+          !cleanMsg.contains('AuthException') &&
           !cleanMsg.contains('http://') &&
           !cleanMsg.contains('https://') &&
           cleanMsg.length < 120) {
@@ -95,5 +99,102 @@ class AppErrorUtils {
     // 9. Fallback User-Friendly Message
     final prefix = defaultPrefix != null ? "$defaultPrefix: " : "";
     return "${prefix}Something went wrong while processing your request. Please try again.";
+  }
+
+  /// Specialized method for formatting User Login, Sign Up, and Password Reset exceptions
+  static String getAuthErrorMessage(dynamic error, {bool isSignUp = false}) {
+    if (error == null) {
+      return isSignUp
+          ? "Account registration failed. Please try again."
+          : "Sign in failed. Please check your credentials and try again.";
+    }
+
+    final String errStr = error.toString().toLowerCase();
+
+    // 1. Internet / Connectivity
+    if (error is SocketException ||
+        error is HandshakeException ||
+        errStr.contains('socketexception') ||
+        errStr.contains('failed host lookup') ||
+        errStr.contains('no address associated with hostname') ||
+        errStr.contains('connection refused') ||
+        errStr.contains('network_error') ||
+        errStr.contains('network is unreachable') ||
+        errStr.contains('errno = 7')) {
+      return "📡 Network Unavailable. Please check your internet connection and try again.";
+    }
+
+    // 2. Already Registered / Email Exists (Sign Up)
+    if (errStr.contains('user already registered') ||
+        errStr.contains('email_exists') ||
+        errStr.contains('already in use') ||
+        errStr.contains('already registered') ||
+        errStr.contains('user_already_exists')) {
+      return "✉️ An account with this email address already exists. Please sign in instead.";
+    }
+
+    // 3. Invalid Login Credentials / Wrong Password (Sign In)
+    if (errStr.contains('invalid login credentials') ||
+        errStr.contains('invalid_credentials') ||
+        errStr.contains('wrong password') ||
+        errStr.contains('invalid email or password') ||
+        errStr.contains('invalid grant')) {
+      return "🔒 Invalid email or password. Please double-check your credentials and try again.";
+    }
+
+    // 4. User Not Found
+    if (errStr.contains('user_not_found') || errStr.contains('user not found')) {
+      return "👤 No account found with this email address. Please check your email or sign up.";
+    }
+
+    // 5. Unconfirmed Email / Verification Required
+    if (errStr.contains('email_not_confirmed') ||
+        errStr.contains('email not confirmed') ||
+        errStr.contains('confirm your email') ||
+        errStr.contains('verification required')) {
+      return "✉️ Email not verified. Please check your inbox and verify your address before logging in.";
+    }
+
+    // 6. Rate Limit / Too Many Attempts
+    if (errStr.contains('over_email_send_rate_limit') ||
+        errStr.contains('rate_limit') ||
+        errStr.contains('too many requests') ||
+        errStr.contains('too_many_requests') ||
+        errStr.contains('429')) {
+      return "⏳ Too many attempts. Please wait a minute before trying again.";
+    }
+
+    // 7. Weak Password
+    if (errStr.contains('weak_password') ||
+        errStr.contains('password should be at least') ||
+        errStr.contains('password is too short')) {
+      return "🔐 Password is too weak. Please use at least 6 characters with letters and numbers.";
+    }
+
+    // 8. Invalid Email Format
+    if (errStr.contains('invalid_email') || errStr.contains('unable to validate email')) {
+      return "📧 Please enter a valid email address.";
+    }
+
+    // 9. Supabase Unconfigured / Offline Mode
+    if (errStr.contains('supabase is not configured') || errStr.contains('not configured')) {
+      return "🌐 Cloud service is currently offline. You can continue as a Guest gardener!";
+    }
+
+    // 10. General Clean Error Fallback
+    if (error is Exception) {
+      final cleanMsg = error.toString().replaceAll(RegExp(r'^Exception:\s*'), '');
+      if (!cleanMsg.contains('AuthException') &&
+          !cleanMsg.contains('SocketException') &&
+          !cleanMsg.contains('ClientException') &&
+          !cleanMsg.contains('http') &&
+          cleanMsg.length < 120) {
+        return cleanMsg;
+      }
+    }
+
+    return isSignUp
+        ? "Unable to complete registration. Please check your details and try again."
+        : "Unable to sign in. Please verify your credentials and try again.";
   }
 }

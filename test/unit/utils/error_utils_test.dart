@@ -42,5 +42,30 @@ void main() {
       expect(msg, isNot(contains('ClientException')));
       expect(msg, isNot(contains('SocketException')));
     });
+
+    // ── User Authentication Tests ─────────────────────────
+    test('Translates Invalid Credentials / Wrong Password for Sign In', () {
+      final error = Exception("AuthException: Invalid login credentials");
+      final msg = AppErrorUtils.getAuthErrorMessage(error, isSignUp: false);
+      expect(msg, contains('🔒 Invalid email or password'));
+    });
+
+    test('Translates User Already Registered / Email Exists for Sign Up', () {
+      final error = Exception("AuthException: User already registered");
+      final msg = AppErrorUtils.getAuthErrorMessage(error, isSignUp: true);
+      expect(msg, contains('✉️ An account with this email address already exists'));
+    });
+
+    test('Translates Rate Limit / Too Many Attempts', () {
+      final error = Exception("AuthException: over_email_send_rate_limit");
+      final msg = AppErrorUtils.getAuthErrorMessage(error, isSignUp: false);
+      expect(msg, contains('⏳ Too many attempts'));
+    });
+
+    test('Translates Weak Password Error for Sign Up', () {
+      final error = Exception("AuthException: Password should be at least 6 characters");
+      final msg = AppErrorUtils.getAuthErrorMessage(error, isSignUp: true);
+      expect(msg, contains('🔐 Password is too weak'));
+    });
   });
 }

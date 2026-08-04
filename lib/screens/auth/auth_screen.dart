@@ -102,7 +102,7 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               const Icon(Icons.error_outline_rounded, color: AppColors.onSurface, size: 20),
               const SizedBox(width: 8),
-              Expanded(child: Text(AppErrorUtils.getUserFriendlyMessage(e))),
+              Expanded(child: Text(AppErrorUtils.getAuthErrorMessage(e, isSignUp: _isSignUp))),
             ],
           ),
           backgroundColor: AppColors.danger,
