@@ -159,14 +159,30 @@ class WeatherStreakDashboard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Expanded(
-                                  child: Text(
-                                    weatherInfo?.condition ?? 'Clear',
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.onSurface,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        weatherInfo?.condition ?? 'Clear',
+                                        style: theme.textTheme.labelMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.onSurface,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (weatherInfo?.locationName != null)
+                                        Text(
+                                          weatherInfo!.locationName,
+                                          style: theme.textTheme.labelSmall?.copyWith(
+                                            color: AppColors.onSurfaceMuted,
+                                            fontSize: 9.5,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
                                   ),
                                 ),
                                 Text(
