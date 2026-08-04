@@ -5,6 +5,7 @@ import '../services/api/gemini_service.dart';
 import '../models/diagnosis_report.dart';
 import '../models/chat_message_model.dart';
 import '../services/database_service.dart';
+import '../core/utils/error_utils.dart';
 
 class ChatMessage {
   final String text;
@@ -140,8 +141,9 @@ class ChatProvider extends ChangeNotifier {
       _messages.add(aiMsg);
       _persistMessage(aiMsg);
     } catch (e) {
+      final userFriendlyText = AppErrorUtils.getUserFriendlyMessage(e);
       final errMsg = ChatMessage(
-        text: "⚠️ Failed to reach AI Assistant: ${e.toString() == 'Exception: Gemini API Key is not set. Please add your key in Settings.' ? 'Please enter a valid Gemini API Key in Settings.' : e.toString()}",
+        text: userFriendlyText,
         isUser: false,
         timestamp: DateTime.now(),
       );

@@ -12,6 +12,7 @@ import '../../providers/garden_provider.dart';
 import '../../models/forum_post.dart';
 import '../../services/api/supabase_service.dart';
 import '../../services/image_service.dart';
+import '../../core/utils/error_utils.dart';
 
 import '../../widgets/app_card.dart';
 import '../../widgets/plant_image.dart';
@@ -1131,7 +1132,7 @@ class _ForumScreenState extends State<ForumScreen> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Failed to publish post: $e'),
+                                content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to publish post')),
                                 backgroundColor: AppTheme.dangerRed,
                               ),
                             );

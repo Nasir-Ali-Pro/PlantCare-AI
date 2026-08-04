@@ -14,6 +14,7 @@ import '../services/api/supabase_service.dart';
 import '../services/diagnosis_orchestrator.dart';
 import '../services/database_service.dart';
 import '../services/image_service.dart';
+import '../core/utils/error_utils.dart';
 
 enum ScanMode {
   diagnose,
@@ -247,7 +248,7 @@ class DiagnosisProvider extends ChangeNotifier {
       await _runDiagnosisPipeline();
     } catch (e) {
       _state = DiagnosisState.error;
-      _errorMessage = 'Failed to select image: ${e.toString()}';
+      _errorMessage = AppErrorUtils.getUserFriendlyMessage(e);
       notifyListeners();
     }
   }
@@ -329,7 +330,7 @@ class DiagnosisProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _state = DiagnosisState.error;
-      _errorMessage = 'Analysis failed: ${e.toString()}';
+      _errorMessage = AppErrorUtils.getUserFriendlyMessage(e);
       notifyListeners();
     }
   }

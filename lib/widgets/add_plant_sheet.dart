@@ -6,6 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/app_colors.dart';
 import '../providers/garden_provider.dart';
 import '../services/image_service.dart';
+import '../core/utils/error_utils.dart';
 import 'app_card.dart';
 
 class AddPlantSheet extends StatefulWidget {
@@ -364,7 +365,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Error adding plant: $e'),
+                                  content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Could not add plant')),
                                   backgroundColor: AppColors.danger,
                                 ),
                               );

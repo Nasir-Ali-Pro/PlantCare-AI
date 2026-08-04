@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/error_utils.dart';
 import '../../providers/garden_provider.dart';
 import '../../widgets/app_card.dart';
 import '../../services/api/supabase_service.dart';
@@ -101,7 +102,7 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               const Icon(Icons.error_outline_rounded, color: AppColors.onSurface, size: 20),
               const SizedBox(width: 8),
-              Expanded(child: Text(e.toString().replaceAll('Exception: ', ''))),
+              Expanded(child: Text(AppErrorUtils.getUserFriendlyMessage(e))),
             ],
           ),
           backgroundColor: AppColors.danger,
@@ -161,7 +162,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not send reset email: ${e.toString().replaceAll("Exception: ", "")}'),
+          content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Could not send reset email')),
           backgroundColor: AppColors.danger,
         ),
       );
