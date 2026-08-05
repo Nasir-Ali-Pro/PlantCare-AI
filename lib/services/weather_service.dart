@@ -21,7 +21,7 @@ class PlantWeatherInfo {
     required this.description,
     required this.isFrostWarning,
     required this.outdoorAdvice,
-    this.locationName = 'Local Area',
+    this.locationName = 'Sangota, Swat, PK',
   });
 
   Map<String, dynamic> toJson() => {
@@ -43,10 +43,10 @@ class PlantWeatherInfo {
         description: json['description'] ?? 'Optimal growing conditions',
         isFrostWarning: json['isFrostWarning'] ?? false,
         outdoorAdvice: json['outdoorAdvice'] ?? 'Weather is optimal for outdoor plants.',
-        locationName: json['locationName'] ?? 'Local Area',
+        locationName: json['locationName'] ?? 'Sangota, Swat, PK',
       );
 
-  factory PlantWeatherInfo.mock({String location = 'Local Area'}) {
+  factory PlantWeatherInfo.mock({String location = 'Sangota, Swat, PK'}) {
     final now = DateTime.now();
     final isNight = now.hour < 6 || now.hour > 18;
     return PlantWeatherInfo(
@@ -79,9 +79,9 @@ class WeatherService {
   factory WeatherService() => _instance;
   WeatherService._internal();
 
-  static const String _openWeatherApiKey = String.fromEnvironment('OPEN_WEATHER_API_KEY', defaultValue: '');
+  static const String _openWeatherApiKey = String.fromEnvironment('OPEN_WEATHER_API_KEY', defaultValue: '0b5d11d8aa2fb213fdf6959519484e99');
 
-  /// Fetches real-time weather based dynamically on the user's actual physical location.
+  /// Fetches real-time weather based dynamically on the user's selected or detected physical location.
   Future<PlantWeatherInfo> getWeather() async {
     // 1. Resolve user location
     final location = await _fetchUserLocation();
@@ -107,14 +107,79 @@ class WeatherService {
     return cached ?? PlantWeatherInfo.mock(location: location.locationName);
   }
 
-  /// Automatically resolves the user's location via IP Geolocation (Zero permission, Instant, Worldwide)
+  /// Saves a manually selected custom location (e.g., Sangota, Swat)
+  Future<void> setManualLocation(UserLocationData location) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('user_manual_lat', location.latitude);
+    await prefs.setDouble('user_manual_lon', location.longitude);
+    await prefs.setString('user_manual_location_name', location.locationName);
+    debugPrint("📌 Manual location saved: ${location.locationName} (${location.latitude}, ${location.longitude})");
+  }
+
+  /// Clears manual location preference and switches back to automatic IP location
+  Future<void> clearManualLocation() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_manual_lat');
+    await prefs.remove('user_manual_lon');
+    await prefs.remove('user_manual_location_name');
+    debugPrint("🔄 Switched back to automatic location detection.");
+  }
+
+  /// Queries Open-Meteo Geocoding API for instant city/town search (e.g. Sangota, Swat, Peshawar, London)
+  Future<List<UserLocationData>> searchLocations(String query) async {
+    if (query.trim().isEmpty) return [];
+    final client = HttpClient();
+    try {
+      final uri = Uri.parse(
+        'https://geocoding-api.open-meteo.com/v1/search?name=${Uri.encodeComponent(query.trim())}&count=8&language=en&format=json',
+      );
+      final request = await client.getUrl(uri).timeout(const Duration(seconds: 4));
+      final response = await request.close();
+
+      if (response.statusCode == 200) {
+        final body = await response.transform(utf8.decoder).join();
+        final Map<String, dynamic> data = json.decode(body);
+        final List<dynamic> results = data['results'] ?? [];
+
+        return results.map((r) {
+          final String name = r['name'] ?? '';
+          final String admin = r['admin1'] ?? '';
+          final String countryCode = r['country_code'] ?? '';
+          final double lat = (r['latitude'] as num).toDouble();
+          final double lon = (r['longitude'] as num).toDouble();
+
+          String locName = name;
+          if (admin.isNotEmpty) locName += ', $admin';
+          if (countryCode.isNotEmpty) locName += ', ${countryCode.toUpperCase()}';
+
+          return UserLocationData(latitude: lat, longitude: lon, locationName: locName);
+        }).toList();
+      }
+    } catch (e) {
+      debugPrint("⚠️ Geocoding location search failed: $e");
+    } finally {
+      client.close();
+    }
+    return [];
+  }
+
+  /// Resolves the active location: checks user manual preference first, then IP geolocation, then default.
   Future<UserLocationData> _fetchUserLocation() async {
     final prefs = await SharedPreferences.getInstance();
-    
-    // Check cached location first as fallback
+
+    // 1. Check if user manually picked a location (e.g., Sangota, Swat)
+    final manualLat = prefs.getDouble('user_manual_lat');
+    final manualLon = prefs.getDouble('user_manual_lon');
+    final manualName = prefs.getString('user_manual_location_name');
+    if (manualLat != null && manualLon != null && manualName != null) {
+      debugPrint("📌 Using User Manual Location: $manualName ($manualLat, $manualLon)");
+      return UserLocationData(latitude: manualLat, longitude: manualLon, locationName: manualName);
+    }
+
+    // 2. Check cached location fallback
     final cachedLat = prefs.getDouble('cached_user_lat');
     final cachedLon = prefs.getDouble('cached_user_lon');
-    final cachedCity = prefs.getString('cached_user_city') ?? 'Local Area';
+    final cachedCity = prefs.getString('cached_user_city');
 
     final client = HttpClient();
     try {
@@ -134,7 +199,6 @@ class WeatherService {
           final String countryCode = data['countryCode'] as String? ?? '';
           final String locName = countryCode.isNotEmpty ? '$city, $countryCode' : city;
 
-          // Save fresh location coordinates
           await prefs.setDouble('cached_user_lat', lat);
           await prefs.setDouble('cached_user_lon', lon);
           await prefs.setString('cached_user_city', locName);
@@ -181,13 +245,13 @@ class WeatherService {
       client2.close();
     }
 
-    // Fallback to cached location or default coordinates
-    if (cachedLat != null && cachedLon != null) {
+    // Fallback to cached location or default to Sangota, Swat, PK
+    if (cachedLat != null && cachedLon != null && cachedCity != null) {
       return UserLocationData(latitude: cachedLat, longitude: cachedLon, locationName: cachedCity);
     }
 
-    // Default fallback coordinates (Lahore) if completely offline on first launch
-    return UserLocationData(latitude: 31.52, longitude: 74.36, locationName: 'Lahore, PK');
+    // Default coordinates: Sangota, Swat, KPK, Pakistan (Lat: 34.7963, Lon: 72.4162)
+    return UserLocationData(latitude: 34.7963, longitude: 72.4162, locationName: 'Sangota, Swat, PK');
   }
 
   /// Fetches weather from OpenWeather API using user coordinates

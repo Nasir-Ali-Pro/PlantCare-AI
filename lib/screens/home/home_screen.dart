@@ -354,6 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   careStreak: streak,
                   weatherInfo: _weatherInfo,
                   loadingWeather: _loadingWeather,
+                  onRefreshWeather: _fetchWeather,
                 ).animate().fade(duration: 300.ms, delay: 120.ms).slideY(begin: 0.05),
                 
                 // ── Daily Care Tasks Digest ──────────────────────────────
