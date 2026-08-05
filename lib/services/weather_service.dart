@@ -92,13 +92,13 @@ class WeatherService {
     
     PlantWeatherInfo? weather;
 
-    // 2. If OpenWeather API key is provided, attempt OpenWeather with user coordinates
-    if (_openWeatherApiKey.isNotEmpty) {
+    // 2. Primary: Fetch from Open-Meteo with high-resolution ECMWF/ICON mountain & valley terrain models
+    weather = await _fetchOpenMeteoWeather(location);
+
+    // 3. Secondary/Fallback: If Open-Meteo is unreachable, fallback to OpenWeather API
+    if (weather == null && _openWeatherApiKey.isNotEmpty) {
       weather = await _fetchOpenWeather(location);
     }
-
-    // 3. Primary/Fallback: Fetch from Open-Meteo with user exact coordinates (Free, Instant, Global)
-    weather ??= await _fetchOpenMeteoWeather(location);
 
     // 4. Save clean weather data to local cache for offline availability
     if (weather != null) {
@@ -117,6 +117,7 @@ class WeatherService {
     await prefs.setDouble('user_manual_lat', location.latitude);
     await prefs.setDouble('user_manual_lon', location.longitude);
     await prefs.setString('user_manual_location_name', location.locationName);
+    await prefs.remove('cached_weather_json');
     debugPrint("📌 Manual location saved: ${location.locationName} (${location.latitude}, ${location.longitude})");
   }
 
@@ -127,6 +128,7 @@ class WeatherService {
     await prefs.remove('user_manual_lon');
     await prefs.remove('user_manual_location_name');
     await prefs.remove('cached_user_city');
+    await prefs.remove('cached_weather_json');
     debugPrint("🔄 Switched back to automatic hardware location detection.");
   }
 
@@ -278,6 +280,61 @@ class WeatherService {
     return UserLocationData(latitude: 34.7963, longitude: 72.4162, locationName: 'Sangota, Swat, PK');
   }
 
+  /// Fetches weather from Open-Meteo API using high-resolution ECMWF/ICON terrain models
+  Future<PlantWeatherInfo?> _fetchOpenMeteoWeather(UserLocationData location) async {
+    final client = HttpClient();
+    try {
+      final uri = Uri.parse(
+        'https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,is_day,precipitation&timezone=auto',
+      );
+
+      final request = await client.getUrl(uri).timeout(const Duration(seconds: 5));
+      final response = await request.close();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.transform(utf8.decoder).join();
+        final Map<String, dynamic> data = json.decode(responseBody);
+
+        if (data.containsKey('current')) {
+          final current = data['current'];
+          final double temp = (current['temperature_2m'] as num).toDouble();
+          final int humidity = (current['relative_humidity_2m'] as num).toInt();
+          final int code = (current['weather_code'] as num).toInt();
+          final int isDay = (current['is_day'] as num).toInt();
+
+          final conditionMap = _mapWeatherCode(code, isDay == 1);
+          final String condition = conditionMap['condition']!;
+          final String desc = conditionMap['description']!;
+
+          double uv = 0.0;
+          if (isDay == 1) {
+            final hour = DateTime.now().hour;
+            final double baseUv = (12 - (hour - 13).abs()).clamp(1.0, 9.0).toDouble();
+            if (condition.toLowerCase().contains('cloudy') || condition.toLowerCase().contains('rain')) {
+              uv = baseUv * 0.4;
+            } else {
+              uv = baseUv;
+            }
+          }
+
+          return _buildPlantWeatherInfo(
+            temp: temp,
+            humidity: humidity,
+            uv: uv,
+            condition: condition,
+            desc: desc,
+            locationName: location.locationName,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("⚠️ Open-Meteo weather fetch failed: $e");
+    } finally {
+      client.close();
+    }
+    return null;
+  }
+
   /// Fetches weather from OpenWeather API using user coordinates
   Future<PlantWeatherInfo?> _fetchOpenWeather(UserLocationData location) async {
     final client = HttpClient();
@@ -335,61 +392,6 @@ class WeatherService {
       }
     } catch (e) {
       debugPrint("⚠️ OpenWeather fetch failed: $e");
-    } finally {
-      client.close();
-    }
-    return null;
-  }
-
-  /// Fetches weather from Open-Meteo API using user coordinates (Free, Real-Time, Global)
-  Future<PlantWeatherInfo?> _fetchOpenMeteoWeather(UserLocationData location) async {
-    final client = HttpClient();
-    try {
-      final uri = Uri.parse(
-        'https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,is_day&timezone=auto',
-      );
-
-      final request = await client.getUrl(uri).timeout(const Duration(seconds: 5));
-      final response = await request.close();
-
-      if (response.statusCode == 200) {
-        final responseBody = await response.transform(utf8.decoder).join();
-        final Map<String, dynamic> data = json.decode(responseBody);
-
-        if (data.containsKey('current')) {
-          final current = data['current'];
-          final double temp = (current['temperature_2m'] as num).toDouble();
-          final int humidity = (current['relative_humidity_2m'] as num).toInt();
-          final int code = (current['weather_code'] as num).toInt();
-          final int isDay = (current['is_day'] as num).toInt();
-
-          final conditionMap = _mapWeatherCode(code, isDay == 1);
-          final String condition = conditionMap['condition']!;
-          final String desc = conditionMap['description']!;
-
-          double uv = 0.0;
-          if (isDay == 1) {
-            final hour = DateTime.now().hour;
-            final double baseUv = (12 - (hour - 13).abs()).clamp(1.0, 9.0).toDouble();
-            if (condition.toLowerCase().contains('cloudy') || condition.toLowerCase().contains('rain')) {
-              uv = baseUv * 0.4;
-            } else {
-              uv = baseUv;
-            }
-          }
-
-          return _buildPlantWeatherInfo(
-            temp: temp,
-            humidity: humidity,
-            uv: uv,
-            condition: condition,
-            desc: desc,
-            locationName: location.locationName,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint("⚠️ Open-Meteo weather fetch failed: $e");
     } finally {
       client.close();
     }
