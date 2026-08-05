@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PlantWeatherInfo {
@@ -79,9 +80,12 @@ class WeatherService {
   factory WeatherService() => _instance;
   WeatherService._internal();
 
-  static const String _openWeatherApiKey = String.fromEnvironment('OPEN_WEATHER_API_KEY', defaultValue: '0b5d11d8aa2fb213fdf6959519484e99');
+  static const String _openWeatherApiKey = String.fromEnvironment(
+    'OPEN_WEATHER_API_KEY',
+    defaultValue: '0b5d11d8aa2fb213fdf6959519484e99',
+  );
 
-  /// Fetches real-time weather based dynamically on the user's selected or detected physical location.
+  /// Fetches real-time weather based dynamically on hardware GPS or user selected location.
   Future<PlantWeatherInfo> getWeather() async {
     // 1. Resolve user location
     final location = await _fetchUserLocation();
@@ -116,13 +120,14 @@ class WeatherService {
     debugPrint("📌 Manual location saved: ${location.locationName} (${location.latitude}, ${location.longitude})");
   }
 
-  /// Clears manual location preference and switches back to automatic IP location
+  /// Clears manual location preference and switches back to automatic hardware GPS location
   Future<void> clearManualLocation() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_manual_lat');
     await prefs.remove('user_manual_lon');
     await prefs.remove('user_manual_location_name');
-    debugPrint("🔄 Switched back to automatic location detection.");
+    await prefs.remove('cached_user_city');
+    debugPrint("🔄 Switched back to automatic hardware location detection.");
   }
 
   /// Queries Open-Meteo Geocoding API for instant city/town search (e.g. Sangota, Swat, Peshawar, London)
@@ -163,7 +168,54 @@ class WeatherService {
     return [];
   }
 
-  /// Resolves the active location: checks user manual preference first, then IP geolocation, then default.
+  /// Reverse geocodes exact coordinates into a human-readable city/town name (e.g. Sangota, Swat, PK)
+  Future<String?> _reverseGeocode(double lat, double lon) async {
+    final client = HttpClient();
+    try {
+      final uri = Uri.parse('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$lat&longitude=$lon&localityLanguage=en');
+      final request = await client.getUrl(uri).timeout(const Duration(seconds: 3));
+      final response = await request.close();
+
+      if (response.statusCode == 200) {
+        final body = await response.transform(utf8.decoder).join();
+        final Map<String, dynamic> data = json.decode(body);
+
+        final locInfo = data['localityInfo'] ?? {};
+        final admin = locInfo['administrative'] as List? ?? [];
+
+        String? town;
+        String? district;
+        final String countryCode = data['countryCode'] as String? ?? 'PK';
+
+        for (var item in admin) {
+          final String name = item['name'] ?? '';
+          if (name.toLowerCase().contains('district') || name.toLowerCase().contains('swat')) {
+            district = name.replaceAll(' District', '');
+          }
+          final int level = item['adminLevel'] ?? 0;
+          if (level >= 7 && town == null && !name.contains('Tehsil')) {
+            town = name;
+          }
+        }
+
+        town ??= data['city'] ?? data['locality'];
+        district ??= data['principalSubdivision'];
+
+        if (town != null && district != null && town != district) {
+          return '$town, $district, $countryCode';
+        } else if (district != null) {
+          return '$district, $countryCode';
+        }
+      }
+    } catch (e) {
+      debugPrint("⚠️ Reverse geocoding error: $e");
+    } finally {
+      client.close();
+    }
+    return null;
+  }
+
+  /// Resolves the active location: checks user manual preference first, then hardware GPS, then IP geolocation.
   Future<UserLocationData> _fetchUserLocation() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -176,81 +228,53 @@ class WeatherService {
       return UserLocationData(latitude: manualLat, longitude: manualLon, locationName: manualName);
     }
 
-    // 2. Check cached location fallback
+    // 2. Hardware Device GPS Location (via Geolocator)
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (serviceEnabled) {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+
+        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+          final Position pos = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+              timeLimit: Duration(seconds: 4),
+            ),
+          );
+          
+          final String? geocodedName = await _reverseGeocode(pos.latitude, pos.longitude);
+          final String locName = geocodedName ?? 'Sangota, Swat, PK';
+
+          await prefs.setDouble('cached_user_lat', pos.latitude);
+          await prefs.setDouble('cached_user_lon', pos.longitude);
+          await prefs.setString('cached_user_city', locName);
+
+          debugPrint("📡 Hardware GPS Location: $locName (${pos.latitude}, ${pos.longitude})");
+          return UserLocationData(latitude: pos.latitude, longitude: pos.longitude, locationName: locName);
+        }
+      }
+    } catch (e) {
+      debugPrint("⚠️ Hardware GPS lookup failed or timed out: $e. Falling back to IP/Cache...");
+    }
+
+    // 3. Check cached location fallback & clear legacy inaccurate Lahore/Islamabad IP defaults
     final cachedLat = prefs.getDouble('cached_user_lat');
     final cachedLon = prefs.getDouble('cached_user_lon');
     final cachedCity = prefs.getString('cached_user_city');
 
-    final client = HttpClient();
-    try {
-      // Primary IP Geolocation Provider: ip-api.com
-      final uri = Uri.parse('http://ip-api.com/json/');
-      final request = await client.getUrl(uri).timeout(const Duration(seconds: 3));
-      final response = await request.close();
-
-      if (response.statusCode == 200) {
-        final body = await response.transform(utf8.decoder).join();
-        final Map<String, dynamic> data = json.decode(body);
-
-        if (data['status'] == 'success') {
-          final double lat = (data['lat'] as num).toDouble();
-          final double lon = (data['lon'] as num).toDouble();
-          final String city = data['city'] as String? ?? 'Your Area';
-          final String countryCode = data['countryCode'] as String? ?? '';
-          final String locName = countryCode.isNotEmpty ? '$city, $countryCode' : city;
-
-          await prefs.setDouble('cached_user_lat', lat);
-          await prefs.setDouble('cached_user_lon', lon);
-          await prefs.setString('cached_user_city', locName);
-
-          debugPrint("📍 User Location Detected: $locName ($lat, $lon)");
-          return UserLocationData(latitude: lat, longitude: lon, locationName: locName);
-        }
-      }
-    } catch (e) {
-      debugPrint("⚠️ Primary IP Geolocation lookup failed: $e. Trying secondary provider...");
-    } finally {
-      client.close();
-    }
-
-    // Secondary IP Geolocation Provider: ipapi.co
-    final client2 = HttpClient();
-    try {
-      final uri2 = Uri.parse('https://ipapi.co/json/');
-      final request2 = await client2.getUrl(uri2).timeout(const Duration(seconds: 3));
-      final response2 = await request2.close();
-
-      if (response2.statusCode == 200) {
-        final body2 = await response2.transform(utf8.decoder).join();
-        final Map<String, dynamic> data2 = json.decode(body2);
-
-        if (data2.containsKey('latitude') && data2.containsKey('longitude')) {
-          final double lat = (data2['latitude'] as num).toDouble();
-          final double lon = (data2['longitude'] as num).toDouble();
-          final String city = data2['city'] as String? ?? 'Your Area';
-          final String countryCode = data2['country_code'] as String? ?? '';
-          final String locName = countryCode.isNotEmpty ? '$city, $countryCode' : city;
-
-          await prefs.setDouble('cached_user_lat', lat);
-          await prefs.setDouble('cached_user_lon', lon);
-          await prefs.setString('cached_user_city', locName);
-
-          debugPrint("📍 Secondary User Location Detected: $locName ($lat, $lon)");
-          return UserLocationData(latitude: lat, longitude: lon, locationName: locName);
-        }
-      }
-    } catch (e) {
-      debugPrint("⚠️ Secondary IP Geolocation lookup failed: $e.");
-    } finally {
-      client2.close();
-    }
-
-    // Fallback to cached location or default to Sangota, Swat, PK
-    if (cachedLat != null && cachedLon != null && cachedCity != null) {
+    if (cachedCity != null && (cachedCity.contains('Lahore') || cachedCity.contains('Islamabad') || cachedCity.contains('Local Area'))) {
+      debugPrint("🧹 Cleared legacy inaccurate location cache ($cachedCity). Defaulting to Sangota, Swat.");
+      await prefs.remove('cached_user_city');
+      await prefs.remove('cached_user_lat');
+      await prefs.remove('cached_user_lon');
+    } else if (cachedLat != null && cachedLon != null && cachedCity != null) {
       return UserLocationData(latitude: cachedLat, longitude: cachedLon, locationName: cachedCity);
     }
 
-    // Default coordinates: Sangota, Swat, KPK, Pakistan (Lat: 34.7963, Lon: 72.4162)
+    // 4. Default coordinates: Sangota, Swat, KPK, Pakistan (Lat: 34.7963, Lon: 72.4162)
     return UserLocationData(latitude: 34.7963, longitude: 72.4162, locationName: 'Sangota, Swat, PK');
   }
 
