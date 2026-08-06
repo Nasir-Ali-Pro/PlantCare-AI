@@ -250,7 +250,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Your plant health companion. Let\'s customize your experience.',
+            'Your Smart Plant Doctor & Care Companion',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,

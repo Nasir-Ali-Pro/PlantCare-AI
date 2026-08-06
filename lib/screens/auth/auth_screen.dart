@@ -6,7 +6,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/error_utils.dart';
 import '../../providers/garden_provider.dart';
 import '../../widgets/app_card.dart';
-import '../../services/api/supabase_service.dart';
 
 class AuthScreen extends StatefulWidget {
   final VoidCallback onAuthenticated;
@@ -116,58 +115,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _handleForgotPassword() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email address first.'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
-      return;
-    }
 
-    try {
-      if (!SupabaseService().isConfigured) {
-        throw Exception('Service not configured.');
-      }
-      await SupabaseService().client.auth.resetPasswordForEmail(email);
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.mark_email_read_rounded, color: AppColors.primary),
-              SizedBox(width: 10),
-              Text('Email Sent', style: TextStyle(color: Colors.white)),
-            ],
-          ),
-          content: Text(
-            'A password reset link has been sent to $email. Please check your inbox.',
-            style: const TextStyle(color: Colors.white70, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Could not send reset email')),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-    }
-  }
 
   void _handleGuestBypass() {
     final gardenProvider = Provider.of<GardenProvider>(context, listen: false);
@@ -223,7 +171,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Your plant health companion',
+                        'Your Smart Plant Doctor & Care Companion',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.onSurfaceMuted,
                               fontSize: 13,
@@ -338,22 +286,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 6),
 
-                        if (!_isSignUp)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _handleForgotPassword,
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                minimumSize: const Size(0, 32),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(color: AppColors.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
+
 
                         if (_isSignUp) ...[
                           const SizedBox(height: 16),

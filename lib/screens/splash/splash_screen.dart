@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
             // Tagline
             Text(
-              'AI Plant Health Doctor & Care Companion',
+              'Your Smart Plant Doctor & Care Companion',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 14,

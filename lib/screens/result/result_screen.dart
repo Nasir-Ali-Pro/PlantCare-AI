@@ -1224,37 +1224,40 @@ class ResultScreen extends StatelessWidget {
             const SizedBox(height: 12),
 
             // ── Feature 1: View All in Shop CTA ────────────────
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MainNavigationShell(initialIndex: 4),
-                  ),
-                  (route) => false,
-                );
-              },
-              icon: const Icon(
-                Icons.storefront_rounded,
-                size: 16,
-                color: AppColors.accentLight,
-              ),
-              label: const Text(
-                'Browse Full Plant Supply Shop',
-                style: TextStyle(
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MainNavigationShell(initialIndex: 4),
+                    ),
+                    (route) => false,
+                  );
+                },
+                icon: const Icon(
+                  Icons.storefront_rounded,
+                  size: 16,
                   color: AppColors.accentLight,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
                 ),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                  color: AppColors.accent.withValues(alpha: 0.5),
-                  width: 1.2,
+                label: const Text(
+                  'Browse Full Shop',
+                  style: TextStyle(
+                    color: AppColors.accentLight,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    letterSpacing: 0.3,
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: AppColors.accent.withValues(alpha: 0.5),
+                    width: 1.2,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),

@@ -963,7 +963,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const Divider(color: AppColors.border, height: 28),
           const Text(
-            'Your Smart Plant Doctor.',
+            'Your Smart Plant Doctor & Care Companion',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.onSurfaceMuted,
