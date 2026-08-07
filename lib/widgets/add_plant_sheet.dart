@@ -87,16 +87,24 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+    final bottomPadding = mediaQuery.padding.bottom;
+    final maxHeight = mediaQuery.size.height * 0.88;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: AppCard(
-        borderRadius: 30,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
+    return Container(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      margin: EdgeInsets.only(bottom: bottomInset),
+      child: SafeArea(
+        top: false,
+        child: AppCard(
+          borderRadius: 28,
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomPadding),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Form(
+              key: _formKey,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -384,16 +392,16 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 4,
                   ),
                 ),
               ),
-            ],
+              const SizedBox(height: 16),
+              ],
+            ),
           ),
-         ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

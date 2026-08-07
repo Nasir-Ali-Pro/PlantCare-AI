@@ -216,6 +216,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
               onPressed: () => showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                useSafeArea: true,
                 backgroundColor: Colors.transparent,
                 builder: (context) => AddPlantSheet(
                   provider: Provider.of<GardenProvider>(context, listen: false),
@@ -1718,6 +1719,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
                 onPressed: () => showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
+                  useSafeArea: true,
                   backgroundColor: Colors.transparent,
                   builder: (context) => AddPlantSheet(
                     provider: Provider.of<GardenProvider>(context, listen: false),

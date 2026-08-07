@@ -232,14 +232,13 @@ class WeatherService {
 
     // 2. Hardware Device GPS Location (via Geolocator)
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (serviceEnabled) {
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (serviceEnabled && (permission == LocationPermission.whileInUse || permission == LocationPermission.always)) {
           final Position pos = await Geolocator.getCurrentPosition(
             locationSettings: const LocationSettings(
               accuracy: LocationAccuracy.medium,
@@ -257,7 +256,6 @@ class WeatherService {
           debugPrint("📡 Hardware GPS Location: $locName (${pos.latitude}, ${pos.longitude})");
           return UserLocationData(latitude: pos.latitude, longitude: pos.longitude, locationName: locName);
         }
-      }
     } catch (e) {
       debugPrint("⚠️ Hardware GPS lookup failed or timed out: $e. Falling back to IP/Cache...");
     }
