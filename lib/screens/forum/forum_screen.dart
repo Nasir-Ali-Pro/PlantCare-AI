@@ -146,6 +146,7 @@ class _ForumScreenState extends State<ForumScreen> {
           prefilledTitle: 'Help needed: ${widget.autoAttachDiagnosisName}',
           prefilledContent: 'My plant was diagnosed with ${widget.autoAttachDiagnosisName}. I would appreciate a second opinion or treatment feedback from the community!',
           prefilledTags: ['#diagnosis', '#help', '#${widget.autoAttachDiagnosisName!.toLowerCase().replaceAll(' ', '')}'],
+          autoAttachImagePath: widget.autoAttachImagePath,
         );
       });
     }
@@ -841,6 +842,7 @@ class _ForumScreenState extends State<ForumScreen> {
     String prefilledTitle = '',
     String prefilledContent = '',
     List<String> prefilledTags = const [],
+    String? autoAttachImagePath,
   }) {
     final gardenProvider = Provider.of<GardenProvider>(context, listen: false);
     final isGuest = gardenProvider.isGuest;
@@ -854,6 +856,12 @@ class _ForumScreenState extends State<ForumScreen> {
     final tagsController = TextEditingController(text: prefilledTags.join(', '));
     String category = 'General';
     List<File> attachedImages = [];
+    if (autoAttachImagePath != null && autoAttachImagePath.isNotEmpty) {
+      final f = File(autoAttachImagePath);
+      if (f.existsSync()) {
+        attachedImages.add(f);
+      }
+    }
 
     showModalBottomSheet(
       context: context,

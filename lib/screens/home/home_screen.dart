@@ -222,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
         leading: gardenProvider.isAdmin
             ? IconButton(
                 onPressed: () => _showSettingsModal(context),
-                icon: const Icon(Icons.settings_suggest_rounded, size: 28, color: AppColors.onSurface),
+                icon: const Icon(Icons.settings_suggest_rounded, size: 26, color: AppColors.onSurface),
               )
             : null,
         title: Row(
@@ -242,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'PlantCare AI',
               style: theme.textTheme.displayMedium?.copyWith(
                 fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -254,7 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => const ForumScreen()),
               );
             },
-            icon: const Icon(Icons.forum_rounded, size: 26, color: AppColors.primary),
+            icon: const Icon(Icons.forum_rounded, size: 24, color: AppColors.primary),
+            tooltip: 'Community Forum',
           ),
           IconButton(
             onPressed: () {
@@ -263,138 +265,199 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => const HistoryScreen()),
               );
             },
-            icon: const Icon(Icons.history_edu_rounded, size: 26, color: AppColors.onSurface),
+            icon: const Icon(Icons.history_edu_rounded, size: 24, color: AppColors.onSurface),
+            tooltip: 'Scan History',
           ),
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Header / Branding ──────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _getGreeting(),
-                              style: theme.textTheme.displayLarge,
-                            ).animate().fade(duration: 300.ms).slideY(begin: 0.1),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Your botanical assistant is online.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.onSurfaceMuted,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 600;
+            final horizontalPadding = constraints.maxWidth < 380 ? 16.0 : 24.0;
+
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 850),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ── Expressive Header / Branding ───────────────────────
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _getGreeting(),
+                                      style: theme.textTheme.displayLarge?.copyWith(
+                                        fontSize: constraints.maxWidth < 360 ? 24 : 28,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ).animate().fade(duration: 300.ms).slideY(begin: 0.1),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryLight,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: AppColors.primaryLight.withValues(alpha: 0.6),
+                                                blurRadius: 6,
+                                                spreadRadius: 1,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Your botanical assistant is online.',
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            color: AppColors.onSurfaceMuted,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ).animate().fade(duration: 300.ms, delay: 100.ms).slideY(begin: 0.1),
+                                  ],
+                                ),
                               ),
-                            ).animate().fade(duration: 300.ms, delay: 100.ms).slideY(begin: 0.1),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                          );
-                        },
-                        child: Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.15),
-                                blurRadius: 10,
-                                spreadRadius: 1,
+                              const SizedBox(width: 16),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                                  );
+                                },
+                                child: Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary.withValues(alpha: 0.2),
+                                        blurRadius: 12,
+                                        spreadRadius: 1,
+                                      ),
+                                    ],
+                                    gradient: const LinearGradient(
+                                      colors: [AppColors.primary, AppColors.secondary],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  ),
+                                  child: gardenProvider.avatarUrl.isNotEmpty
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(26),
+                                          child: buildPlantImage(
+                                            gardenProvider.avatarUrl,
+                                            width: 52,
+                                            height: 52,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : const Center(
+                                          child: Icon(
+                                            Icons.person_outline_rounded,
+                                            color: Colors.white,
+                                            size: 26,
+                                          ),
+                                        ),
+                                ).animate().fade(duration: 350.ms, delay: 150.ms).scale(begin: const Offset(0.8, 0.8)),
                               ),
                             ],
-                            gradient: const LinearGradient(
-                              colors: [AppColors.primary, AppColors.secondary],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
                           ),
-                          child: gardenProvider.avatarUrl.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(25),
-                                  child: buildPlantImage(
-                                    gardenProvider.avatarUrl,
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : const Center(
-                                  child: Icon(
-                                    Icons.person_outline_rounded,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                        ).animate().fade(duration: 350.ms, delay: 150.ms).scale(begin: const Offset(0.8, 0.8)),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ── Streak and Weather ──────────────────────────────────
-                WeatherStreakDashboard(
-                  careStreak: streak,
-                  weatherInfo: _weatherInfo,
-                  loadingWeather: _loadingWeather,
-                  onRefreshWeather: _fetchWeather,
-                ).animate().fade(duration: 300.ms, delay: 120.ms).slideY(begin: 0.05),
-                
-                // ── Daily Care Tasks Digest ──────────────────────────────
-                _buildDailyCareDigest(context).animate().fade(duration: 300.ms, delay: 150.ms).slideY(begin: 0.05),
-
-                // ── Scan Mode Selector ──────────────────────────────────
-                _buildScanModeSelector(context).animate().fade(duration: 300.ms, delay: 180.ms).slideY(begin: 0.05),
-    
-                // ── Capture Panel ──────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Camera Option
-                      ActionCard(
-                        title: 'Snap Leaf Photo',
-                        subtitle: 'Use camera to capture single leaf',
-                        icon: Icons.camera_alt_rounded,
-                        isPrimary: true,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0F766E), Color(0xFF0D9488)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                         ),
-                        onPressed: () => _navigateToScanning(context, ImageSource.camera),
-                      ).animate().fade(duration: 300.ms, delay: 150.ms).slideX(begin: -0.05),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Gallery Option
-                      ActionCard(
-                        title: 'Upload from Gallery',
-                        subtitle: 'Diagnose saved leaf photo',
-                        icon: Icons.photo_library_rounded,
-                        onPressed: () => _navigateToScanning(context, ImageSource.gallery),
-                      ).animate().fade(duration: 300.ms, delay: 200.ms).slideX(begin: 0.05),
-                    ],
-                  ),
-                ),
+
+                        // ── Streak and Weather ──────────────────────────────────
+                        WeatherStreakDashboard(
+                          careStreak: streak,
+                          weatherInfo: _weatherInfo,
+                          loadingWeather: _loadingWeather,
+                          onRefreshWeather: _fetchWeather,
+                        ).animate().fade(duration: 300.ms, delay: 120.ms).slideY(begin: 0.05),
+                        
+                        // ── Daily Care Tasks Digest ──────────────────────────────
+                        _buildDailyCareDigest(context).animate().fade(duration: 300.ms, delay: 150.ms).slideY(begin: 0.05),
+
+                        // ── Scan Mode Selector ──────────────────────────────────
+                        _buildScanModeSelector(context).animate().fade(duration: 300.ms, delay: 180.ms).slideY(begin: 0.05),
+            
+                        // ── Responsive Capture Action Panel ───────────────────────
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16.0),
+                          child: isWide
+                              ? Row(
+                                  children: [
+                                    Expanded(
+                                      child: ActionCard(
+                                        title: 'Snap Leaf Photo',
+                                        subtitle: 'Use camera to capture single leaf',
+                                        icon: Icons.camera_alt_rounded,
+                                        isPrimary: true,
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF0F766E), Color(0xFF0D9488)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        onPressed: () => _navigateToScanning(context, ImageSource.camera),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: ActionCard(
+                                        title: 'Upload from Gallery',
+                                        subtitle: 'Diagnose saved leaf photo',
+                                        icon: Icons.photo_library_rounded,
+                                        onPressed: () => _navigateToScanning(context, ImageSource.gallery),
+                                      ),
+                                    ),
+                                  ],
+                                ).animate().fade(duration: 300.ms, delay: 150.ms).slideY(begin: 0.05)
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ActionCard(
+                                      title: 'Snap Leaf Photo',
+                                      subtitle: 'Use camera to capture single leaf',
+                                      icon: Icons.camera_alt_rounded,
+                                      isPrimary: true,
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF0F766E), Color(0xFF0D9488)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      onPressed: () => _navigateToScanning(context, ImageSource.camera),
+                                    ).animate().fade(duration: 300.ms, delay: 150.ms).slideX(begin: -0.05),
+                                    
+                                    const SizedBox(height: 14),
+                                    
+                                    ActionCard(
+                                      title: 'Upload from Gallery',
+                                      subtitle: 'Diagnose saved leaf photo',
+                                      icon: Icons.photo_library_rounded,
+                                      onPressed: () => _navigateToScanning(context, ImageSource.gallery),
+                                    ).animate().fade(duration: 300.ms, delay: 200.ms).slideX(begin: 0.05),
+                                  ],
+                                ),
+                        ),
     
                 // ── History Carousel ────────────────────────────────────
                 Consumer<DiagnosisProvider>(
@@ -521,9 +584,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ).animate().fade(duration: 300.ms, delay: 250.ms).slideY(begin: 0.05);
                   },
                 ),
-              ],
-            ),
-          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
