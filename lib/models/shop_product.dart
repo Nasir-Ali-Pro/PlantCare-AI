@@ -76,9 +76,9 @@ class ShopProduct {
     );
   }
 
-  // Supabase CDN Storage public URL helper for shop product images
+  // High-definition botanical product images helper
   static String _img(String photoId, String productId) =>
-      'https://ljvsigniwvpbmhhxphen.supabase.co/storage/v1/object/public/shop_products/$productId.jpg';
+      'https://images.unsplash.com/$photoId?auto=format&fit=crop&w=500&q=80';
 
   static final List<ShopProduct> defaultProducts = [
     // ── Pest & Disease Control ─────────────────────────────────────────────

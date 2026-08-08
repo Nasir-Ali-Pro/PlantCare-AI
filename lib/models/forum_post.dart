@@ -2,6 +2,7 @@ class ForumComment {
   final String id;
   final String authorName;
   final String authorTitle;
+  final String? authorAvatar;
   final bool isVerifiedExpert;
   // Mutable so owners/admin can edit in-place without rebuilding the entire list
   String content;
@@ -14,6 +15,7 @@ class ForumComment {
     required this.id,
     required this.authorName,
     required this.authorTitle,
+    this.authorAvatar,
     this.isVerifiedExpert = false,
     required this.content,
     required this.dateTime,
@@ -27,6 +29,7 @@ class ForumPost {
   final String id;
   final String authorName;
   final String authorTitle;
+  final String? authorAvatar;
   final bool isVerifiedExpert;
   // Mutable so owners/admin can edit in-place without rebuilding the entire list
   String category;
@@ -44,6 +47,7 @@ class ForumPost {
     required this.id,
     required this.authorName,
     required this.authorTitle,
+    this.authorAvatar,
     this.isVerifiedExpert = false,
     required this.category,
     required this.title,

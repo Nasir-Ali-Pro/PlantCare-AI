@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../models/diagnosis_report.dart';
@@ -1065,25 +1063,13 @@ class ResultScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.border),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: CachedNetworkImage(
-                            imageUrl: product.imageUrl,
-                            fit: BoxFit.contain,
-                            placeholder: (context, url) => Shimmer.fromColors(
-                              baseColor: AppColors.surfaceHighlight,
-                              highlightColor: AppColors.borderLight,
-                              child: Container(
-                                color: AppColors.backgroundLight,
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Center(
-                              child: Icon(
-                                Icons.local_florist_rounded,
-                                color: AppColors.primary,
-                                size: 28,
-                              ),
-                            ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: buildPlantImage(
+                            product.imageUrl,
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),

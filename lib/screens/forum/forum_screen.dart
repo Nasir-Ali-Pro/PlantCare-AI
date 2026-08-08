@@ -1109,6 +1109,7 @@ class _ForumScreenState extends State<ForumScreen> {
                             id: _generateUUID(),
                             authorName: gardenProvider.username,
                             authorTitle: gardenProvider.isGuest ? 'Guest Gardener' : 'Botanical Member',
+                            authorAvatar: gardenProvider.avatarUrl.isNotEmpty ? gardenProvider.avatarUrl : null,
                             isVerifiedExpert: false,
                             category: category,
                             title: titleController.text.trim(),
@@ -1210,27 +1211,38 @@ class _ForumScreenState extends State<ForumScreen> {
               final isOriginalAuthor = comment.authorName == post.authorName;
               final isReply = depth > 0;
 
+              final bool hasCustomAvatar = comment.authorAvatar != null && comment.authorAvatar!.isNotEmpty;
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isReply ? Colors.white.withValues(alpha: 0.015) : Colors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(18),
-                  
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundColor: avatarBg,
-                          child: Text(
-                            initials,
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        if (hasCustomAvatar)
+                          ClipOval(
+                            child: buildPlantImage(
+                              comment.authorAvatar!,
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        else
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor: avatarBg,
+                            child: Text(
+                              initials,
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -1626,6 +1638,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                     id: _generateUUID(),
                                     authorName: gardenProvider.username,
                                     authorTitle: gardenProvider.isGuest ? 'Guest Gardener' : 'Botanical Member',
+                                    authorAvatar: gardenProvider.avatarUrl.isNotEmpty ? gardenProvider.avatarUrl : null,
                                     content: commentController.text.trim(),
                                     dateTime: DateTime.now(),
                                   );
@@ -1817,17 +1830,26 @@ class _ForumScreenState extends State<ForumScreen> {
                                             width: 1.2,
                                           ),
                                         ),
-                                        child: CircleAvatar(
-                                          radius: 18,
-                                          backgroundColor: post.isVerifiedExpert 
-                                              ? AppTheme.primaryGreen.withValues(alpha: 0.12)
-                                              : Colors.white.withValues(alpha: 0.04),
-                                          child: Icon(
-                                            post.isVerifiedExpert ? Icons.verified_user_rounded : Icons.person_rounded,
-                                            size: 16,
-                                            color: post.isVerifiedExpert ? AppTheme.primaryGreen : Colors.white60,
-                                          ),
-                                        ),
+                                        child: (post.authorAvatar != null && post.authorAvatar!.isNotEmpty)
+                                            ? ClipOval(
+                                                child: buildPlantImage(
+                                                  post.authorAvatar!,
+                                                  width: 36,
+                                                  height: 36,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              )
+                                            : CircleAvatar(
+                                                radius: 18,
+                                                backgroundColor: post.isVerifiedExpert 
+                                                    ? AppTheme.primaryGreen.withValues(alpha: 0.12)
+                                                    : Colors.white.withValues(alpha: 0.04),
+                                                child: Icon(
+                                                  post.isVerifiedExpert ? Icons.verified_user_rounded : Icons.person_rounded,
+                                                  size: 16,
+                                                  color: post.isVerifiedExpert ? AppTheme.primaryGreen : Colors.white60,
+                                                ),
+                                              ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
