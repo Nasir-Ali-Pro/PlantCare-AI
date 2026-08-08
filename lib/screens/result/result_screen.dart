@@ -1066,10 +1066,12 @@ class ResultScreen extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: buildPlantImage(
-                            product.imageUrl,
+                            product.imageUrl.isNotEmpty
+                                ? product.imageUrl
+                                : 'assets/images/shop/${product.id}.jpg',
                             width: 64,
                             height: 64,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),

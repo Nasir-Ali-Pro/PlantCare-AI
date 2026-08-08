@@ -16,7 +16,7 @@ void main() {
         expect(product.rating, greaterThanOrEqualTo(1.0));
         expect(product.rating, lessThanOrEqualTo(5.0));
         expect(product.reviewCount, greaterThan(0));
-        expect(product.imageUrl, startsWith('http'));
+        expect(product.imageUrl.isNotEmpty, isTrue);
         expect(product.asin, isNotEmpty);
         expect(product.category, isNotEmpty);
       }

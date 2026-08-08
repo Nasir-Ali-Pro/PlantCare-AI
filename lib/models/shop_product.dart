@@ -76,9 +76,9 @@ class ShopProduct {
     );
   }
 
-  // High-definition botanical product images helper
+  // Local high-definition shop product images helper
   static String _img(String photoId, String productId) =>
-      'https://images.unsplash.com/$photoId?auto=format&fit=crop&w=500&q=80';
+      'assets/images/shop/$productId.jpg';
 
   static final List<ShopProduct> defaultProducts = [
     // ── Pest & Disease Control ─────────────────────────────────────────────

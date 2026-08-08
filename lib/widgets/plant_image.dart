@@ -19,13 +19,19 @@ Widget _buildShimmerPlaceholder({double? width, double? height}) {
 }
 
 Widget buildPlantImage(String path, {double? width, double? height, BoxFit fit = BoxFit.cover}) {
-  if (path.isEmpty) {
+  Widget buildPlaceholderIcon() {
     return Container(
       width: width,
       height: height,
-      color: Colors.white.withValues(alpha: 0.04),
-      child: const Icon(Icons.image_not_supported_rounded, color: Colors.white24),
+      color: AppColors.surfaceHighlight.withValues(alpha: 0.5),
+      child: const Center(
+        child: Icon(Icons.local_florist_rounded, color: AppColors.primary, size: 24),
+      ),
     );
+  }
+
+  if (path.isEmpty) {
+    return buildPlaceholderIcon();
   }
 
   if (path.startsWith('data:')) {
@@ -37,22 +43,22 @@ Widget buildPlantImage(String path, {double? width, double? height, BoxFit fit =
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (context, error, stackTrace) => Container(
-          width: width,
-          height: height,
-          color: Colors.white.withValues(alpha: 0.04),
-          child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-        ),
+        errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
       );
     } catch (e) {
       debugPrint("⚠️ Failed to parse base64 image: $e");
-      return Container(
-        width: width,
-        height: height,
-        color: Colors.white.withValues(alpha: 0.04),
-        child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-      );
+      return buildPlaceholderIcon();
     }
+  }
+
+  if (path.startsWith('assets/')) {
+    return Image.asset(
+      path,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
+    );
   }
 
   final bool isNetwork = path.startsWith('http') || path.startsWith('https');
@@ -65,12 +71,7 @@ Widget buildPlantImage(String path, {double? width, double? height, BoxFit fit =
         height: height,
         fit: fit,
         placeholder: (context, url) => _buildShimmerPlaceholder(width: width, height: height),
-        errorWidget: (context, url, error) => Container(
-          width: width,
-          height: height,
-          color: Colors.white.withValues(alpha: 0.04),
-          child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-        ),
+        errorWidget: (context, url, error) => buildPlaceholderIcon(),
       );
     }
 
@@ -79,12 +80,7 @@ Widget buildPlantImage(String path, {double? width, double? height, BoxFit fit =
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: width,
-        height: height,
-        color: Colors.white.withValues(alpha: 0.04),
-        child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-      ),
+      errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
     );
   } else {
     return Image.file(
@@ -92,28 +88,33 @@ Widget buildPlantImage(String path, {double? width, double? height, BoxFit fit =
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: width,
-        height: height,
-        color: Colors.white.withValues(alpha: 0.04),
-        child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-      ),
+      errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
     );
   }
 }
 
 Widget buildPlantImageFile(dynamic file, {double? width, double? height, BoxFit fit = BoxFit.cover}) {
-  if (file == null) {
+  Widget buildPlaceholderIcon() {
     return Container(
       width: width,
       height: height,
-      color: Colors.white.withValues(alpha: 0.04),
-      child: const Icon(Icons.image_not_supported_rounded, color: Colors.white24),
+      color: AppColors.surfaceHighlight.withValues(alpha: 0.5),
+      child: const Center(
+        child: Icon(Icons.local_florist_rounded, color: AppColors.primary, size: 24),
+      ),
     );
+  }
+
+  if (file == null) {
+    return buildPlaceholderIcon();
   }
 
   // If the file is passed as XFile or has a path
   final String path = file.path;
+
+  if (path.isEmpty) {
+    return buildPlaceholderIcon();
+  }
   
   if (path.startsWith('data:')) {
     try {
@@ -124,22 +125,22 @@ Widget buildPlantImageFile(dynamic file, {double? width, double? height, BoxFit 
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (context, error, stackTrace) => Container(
-          width: width,
-          height: height,
-          color: Colors.white.withValues(alpha: 0.04),
-          child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-        ),
+        errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
       );
     } catch (e) {
       debugPrint("⚠️ Failed to parse base64 image file: $e");
-      return Container(
-        width: width,
-        height: height,
-        color: Colors.white.withValues(alpha: 0.04),
-        child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-      );
+      return buildPlaceholderIcon();
     }
+  }
+
+  if (path.startsWith('assets/')) {
+    return Image.asset(
+      path,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
+    );
   }
 
   final bool isNetwork = path.startsWith('http') || path.startsWith('https');
@@ -152,12 +153,7 @@ Widget buildPlantImageFile(dynamic file, {double? width, double? height, BoxFit 
         height: height,
         fit: fit,
         placeholder: (context, url) => _buildShimmerPlaceholder(width: width, height: height),
-        errorWidget: (context, url, error) => Container(
-          width: width,
-          height: height,
-          color: Colors.white.withValues(alpha: 0.04),
-          child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-        ),
+        errorWidget: (context, url, error) => buildPlaceholderIcon(),
       );
     }
 
@@ -166,12 +162,7 @@ Widget buildPlantImageFile(dynamic file, {double? width, double? height, BoxFit 
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: width,
-        height: height,
-        color: Colors.white.withValues(alpha: 0.04),
-        child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-      ),
+      errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
     );
   } else {
     final File ioFile = file is File ? file : File(path);
@@ -180,12 +171,7 @@ Widget buildPlantImageFile(dynamic file, {double? width, double? height, BoxFit 
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: width,
-        height: height,
-        color: Colors.white.withValues(alpha: 0.04),
-        child: const Icon(Icons.broken_image_rounded, color: Colors.white24),
-      ),
+      errorBuilder: (context, error, stackTrace) => buildPlaceholderIcon(),
     );
   }
 }
