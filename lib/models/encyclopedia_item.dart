@@ -28,8 +28,7 @@ class EncyclopediaItem {
   });
 
   /// Hardcoded high-quality mock data for the 14 PlantVillage supported species + typical house plants
-  static List<EncyclopediaItem> get defaultItems {
-    return [
+  static final List<EncyclopediaItem> defaultItems = [
       EncyclopediaItem(
         id: 'ep_1',
         commonName: 'Tomato',
@@ -150,5 +149,4 @@ class EncyclopediaItem {
         ],
       )
     ];
-  }
 }

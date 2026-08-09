@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../core/constants/app_constants.dart';
 import '../models/shop_product.dart';
 import '../services/api/supabase_service.dart';
 import '../services/database_service.dart';
@@ -129,12 +130,16 @@ class ShopProvider extends ChangeNotifier {
   /// Logs click analytics and attempts to launch the Amazon Shopping App directly (deep link)
   /// before falling back to the browser redirect.
   Future<void> logClickAndLaunch(String productId, String asin) async {
-    // 1. Log click redirect event in Supabase asynchronously
-    SupabaseService().logShopClick(productId);
+    // 1. Await the analytics call so failures are caught, not silently swallowed
+    try {
+      await SupabaseService().logShopClick(productId);
+    } catch (e) {
+      debugPrint('⚠️ Click analytics failed (non-fatal): $e');
+    }
 
-    // 2. Build deep link URIs
+    // 2. Build deep link URIs — affiliate tag comes from AppConstants (single source of truth)
     final String deepLinkUrl = 'amzn://dp/$asin';
-    final String webUrl = 'https://www.amazon.com/dp/$asin?tag=83847-20';
+    final String webUrl = 'https://www.amazon.com/dp/$asin?tag=${AppConstants.affiliateTag}';
 
     final Uri deepUri = Uri.parse(deepLinkUrl);
     final Uri webUri = Uri.parse(webUrl);

@@ -6,6 +6,24 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+    <!-- Camera — required for image_picker camera source (scanning screen) -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+
+    <!-- Notifications — POST_NOTIFICATIONS is required on Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Scheduling — required by flutter_local_notifications for exact alarm scheduling -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+
+    <!-- Boot receiver — reschedules plant reminders after device reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- Media access — READ_MEDIA_IMAGES for Android 13+, READ_EXTERNAL_STORAGE for older -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+
     <application
         android:label="PlantCare AI"
         android:name="${applicationName}"

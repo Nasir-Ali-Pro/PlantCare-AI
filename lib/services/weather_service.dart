@@ -80,9 +80,12 @@ class WeatherService {
   factory WeatherService() => _instance;
   WeatherService._internal();
 
+  // Key is injected at build time via --dart-define=OPEN_WEATHER_API_KEY=xxx.
+  // The defaultValue is intentionally empty; when missing, the service falls
+  // back to Open-Meteo only, which requires no key at all.
   static const String _openWeatherApiKey = String.fromEnvironment(
     'OPEN_WEATHER_API_KEY',
-    defaultValue: '0b5d11d8aa2fb213fdf6959519484e99',
+    defaultValue: '',
   );
 
   /// Fetches real-time weather based dynamically on hardware GPS or user selected location.
@@ -191,8 +194,9 @@ class WeatherService {
 
         for (var item in admin) {
           final String name = item['name'] ?? '';
-          if (name.toLowerCase().contains('district') || name.toLowerCase().contains('swat')) {
-            district = name.replaceAll(' District', '');
+          // Strip ' District' suffix generically (not limited to specific region names)
+          if (name.toLowerCase().contains('district')) {
+            district = name.replaceAll(RegExp(r'\s*[Dd]istrict\s*'), '').trim();
           }
           final int level = item['adminLevel'] ?? 0;
           if (level >= 7 && town == null && !name.contains('Tehsil')) {
@@ -247,7 +251,9 @@ class WeatherService {
           );
           
           final String? geocodedName = await _reverseGeocode(pos.latitude, pos.longitude);
-          final String locName = geocodedName ?? 'Sangota, Swat, PK';
+          // If reverse-geocoding fails, use a generic placeholder instead of
+          // a developer's home-town coordinate (which would mislead users).
+          final String locName = geocodedName ?? '${pos.latitude.toStringAsFixed(2)}°N, ${pos.longitude.toStringAsFixed(2)}°E';
 
           await prefs.setDouble('cached_user_lat', pos.latitude);
           await prefs.setDouble('cached_user_lon', pos.longitude);
@@ -266,7 +272,7 @@ class WeatherService {
     final cachedCity = prefs.getString('cached_user_city');
 
     if (cachedCity != null && (cachedCity.contains('Lahore') || cachedCity.contains('Islamabad') || cachedCity.contains('Local Area'))) {
-      debugPrint("🧹 Cleared legacy inaccurate location cache ($cachedCity). Defaulting to Sangota, Swat.");
+      debugPrint("🧹 Cleared stale inaccurate location cache ($cachedCity).");
       await prefs.remove('cached_user_city');
       await prefs.remove('cached_user_lat');
       await prefs.remove('cached_user_lon');
@@ -274,8 +280,10 @@ class WeatherService {
       return UserLocationData(latitude: cachedLat, longitude: cachedLon, locationName: cachedCity);
     }
 
-    // 4. Default coordinates: Sangota, Swat, KPK, Pakistan (Lat: 34.7963, Lon: 72.4162)
-    return UserLocationData(latitude: 34.7963, longitude: 72.4162, locationName: 'Sangota, Swat, PK');
+    // 4. No GPS, no cache — return a neutral fallback so the UI can show '—' instead
+    //    of a developer's hard-coded home town.  Callers display PlantWeatherInfo.mock()
+    //    which already handles an empty location string gracefully.
+    return UserLocationData(latitude: 0, longitude: 0, locationName: 'Unknown Location');
   }
 
   /// Fetches weather from Open-Meteo API using high-resolution ECMWF/ICON terrain models
@@ -307,7 +315,9 @@ class WeatherService {
           double uv = 0.0;
           if (isDay == 1) {
             final hour = DateTime.now().hour;
-            final double baseUv = (12 - (hour - 13).abs()).clamp(1.0, 9.0).toDouble();
+            // Solar UV peak is ~12 at solar noon; real-world max is 12 (not 9).
+            // At night the result would be negative so clamp minimum to 0.
+            final double baseUv = (12 - (hour - 13).abs()).clamp(0.0, 12.0).toDouble();
             if (condition.toLowerCase().contains('cloudy') || condition.toLowerCase().contains('rain')) {
               uv = baseUv * 0.4;
             } else {
@@ -368,7 +378,7 @@ class WeatherService {
           double uv = 0.0;
           if (isDay) {
             final hour = DateTime.now().hour;
-            final double baseUv = (12 - (hour - 13).abs()).clamp(1.0, 9.0).toDouble();
+            final double baseUv = (12 - (hour - 13).abs()).clamp(0.0, 12.0).toDouble();
             if (condition.toLowerCase().contains('cloudy') ||
                 condition.toLowerCase().contains('rain') ||
                 condition.toLowerCase().contains('thunderstorm')) {
@@ -505,16 +515,25 @@ class WeatherService {
     };
   }
 
+  /// Cache weather data with a 60-minute expiry timestamp.
   Future<void> _cacheWeatherInfo(PlantWeatherInfo weather) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cached_weather_json', json.encode(weather.toJson()));
+      await prefs.setInt('cached_weather_timestamp', DateTime.now().millisecondsSinceEpoch);
     } catch (_) {}
   }
 
+  /// Load cached weather only if it is less than 60 minutes old.
   Future<PlantWeatherInfo?> _loadCachedWeather() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final cachedAt = prefs.getInt('cached_weather_timestamp') ?? 0;
+      final ageMinutes = (DateTime.now().millisecondsSinceEpoch - cachedAt) ~/ 60000;
+      if (ageMinutes > 60) {
+        debugPrint('⏰ Weather cache expired ($ageMinutes min old). Skipping.');
+        return null;
+      }
       final raw = prefs.getString('cached_weather_json');
       if (raw != null && raw.isNotEmpty) {
         return PlantWeatherInfo.fromJson(json.decode(raw));

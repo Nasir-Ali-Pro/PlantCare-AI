@@ -172,6 +172,12 @@ class ChatProvider extends ChangeNotifier {
     _activeConsultationReport = report;
     _messages.clear();
 
+    // Clear persisted messages so re-launching the app won't restore the old
+    // generic chat on top of the doctor-consultation welcome message.
+    DatabaseService.clearChatMessages().catchError((e) {
+      debugPrint('⚠️ Failed to clear chat DB for doctor consultation: $e');
+    });
+
     final text = "Hello! I am your AI Plant Doctor. 🩺\n\n"
         "I've loaded the diagnosis report for your **${report.plantName}** which was diagnosed with **${report.diseaseName}** (${report.severity} severity).\n\n"
         "Here is a summary of recommended treatments:\n"

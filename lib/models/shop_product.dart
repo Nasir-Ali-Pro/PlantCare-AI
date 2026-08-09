@@ -1,3 +1,5 @@
+import '../core/constants/app_constants.dart';
+
 class ShopProduct {
   final String id;
   final String title;
@@ -21,8 +23,9 @@ class ShopProduct {
     required this.category,
   });
 
-  /// Generates the standard Amazon affiliate redirect link with tag 83847-20
-  String get affiliateUrl => 'https://www.amazon.com/dp/$asin?tag=83847-20';
+  /// Generates the standard Amazon affiliate redirect link using the centralised tag.
+  String get affiliateUrl =>
+      'https://www.amazon.com/dp/$asin?tag=${AppConstants.affiliateTag}';
 
   Map<String, dynamic> toJson() {
     return {
@@ -76,8 +79,9 @@ class ShopProduct {
     );
   }
 
-  // Local high-definition shop product images helper
-  static String _img(String photoId, String productId) =>
+  // Local high-definition shop product images helper.
+  // Assets are keyed by productId only.
+  static String _img(String productId) =>
       'assets/images/shop/$productId.jpg';
 
   static final List<ShopProduct> defaultProducts = [
@@ -90,7 +94,7 @@ class ShopProduct {
       price: '\$14.99',
       rating: 4.6,
       reviewCount: 3420,
-      imageUrl: _img('photo-1574671235952-f6c15a4ebf33', 'prod_neem_oil'),
+      imageUrl: _img('prod_neem_oil'),
       asin: 'B004QAWGIO',
       category: 'Pest & Disease Control',
     ),
@@ -102,7 +106,7 @@ class ShopProduct {
       price: '\$11.95',
       rating: 4.7,
       reviewCount: 1890,
-      imageUrl: _img('photo-1601004890657-d6f7b3beefbc', 'prod_systemic_pest'),
+      imageUrl: _img('prod_systemic_pest'),
       asin: 'B000BX1HKI',
       category: 'Pest & Disease Control',
     ),
@@ -114,7 +118,7 @@ class ShopProduct {
       price: '\$16.97',
       rating: 4.5,
       reviewCount: 2870,
-      imageUrl: _img('photo-1592503254549-d83d24a492cf', 'prod_copper_fungicide'),
+      imageUrl: _img('prod_copper_fungicide'),
       asin: 'B000BQKRSS',
       category: 'Pest & Disease Control',
     ),
@@ -126,7 +130,7 @@ class ShopProduct {
       price: '\$9.97',
       rating: 4.4,
       reviewCount: 6820,
-      imageUrl: _img('photo-1530836369250-ef72a3f5cda8', 'prod_insect_soap'),
+      imageUrl: _img('prod_insect_soap'),
       asin: 'B00CPKH8XI',
       category: 'Pest & Disease Control',
     ),
@@ -140,7 +144,7 @@ class ShopProduct {
       price: '\$8.49',
       rating: 4.8,
       reviewCount: 82500,
-      imageUrl: _img('photo-1416879595882-3373a0480b5b', 'prod_miracle_gro'),
+      imageUrl: _img('prod_miracle_gro'),
       asin: 'B000F6XGZ0',
       category: 'Fertilizers & Soil',
     ),
@@ -152,7 +156,7 @@ class ShopProduct {
       price: '\$12.99',
       rating: 4.5,
       reviewCount: 4210,
-      imageUrl: _img('photo-1585421514738-01798e348b17', 'prod_soil_mix'),
+      imageUrl: _img('prod_soil_mix'),
       asin: 'B002Y08J3E',
       category: 'Fertilizers & Soil',
     ),
@@ -166,7 +170,7 @@ class ShopProduct {
       price: '\$13.58',
       rating: 4.8,
       reviewCount: 15400,
-      imageUrl: _img('photo-1416575890019-c4e4cb6af4cd', 'prod_fiskars_shears'),
+      imageUrl: _img('prod_fiskars_shears'),
       asin: 'B01MU8CP1W',
       category: 'Gardening Tools',
     ),
@@ -178,7 +182,7 @@ class ShopProduct {
       price: '\$13.99',
       rating: 4.5,
       reviewCount: 9200,
-      imageUrl: _img('photo-1620912167809-e21c7f0e56c6', 'prod_garden_gloves'),
+      imageUrl: _img('prod_garden_gloves'),
       asin: 'B08863XWN2',
       category: 'Gardening Tools',
     ),
@@ -192,7 +196,7 @@ class ShopProduct {
       price: '\$10.99',
       rating: 4.5,
       reviewCount: 51300,
-      imageUrl: _img('photo-1523348837708-15d4a09cfac2', 'prod_moisture_meter'),
+      imageUrl: _img('prod_moisture_meter'),
       asin: 'B014MJ8J2U',
       category: 'Watering Equipment',
     ),
@@ -207,7 +211,7 @@ class ShopProduct {
       price: '\$17.99',
       rating: 4.7,
       reviewCount: 4700,
-      imageUrl: _img('photo-1558618666-fcd25c85cd64', 'prod_grow_light'),
+      imageUrl: _img('prod_grow_light'),
       asin: 'B07BRKT56T',
       category: 'Indoor Growing',
     ),
@@ -219,7 +223,7 @@ class ShopProduct {
       price: '\$12.49',
       rating: 4.6,
       reviewCount: 14700,
-      imageUrl: _img('photo-1457530378978-8bac673b8062', 'prod_superthrive'),
+      imageUrl: _img('prod_superthrive'),
       asin: 'B000OM82J0',
       category: 'Indoor Growing',
     ),
@@ -231,7 +235,7 @@ class ShopProduct {
       price: '\$6.49',
       rating: 4.5,
       reviewCount: 8950,
-      imageUrl: _img('photo-1549893072-4bc678117f95', 'prod_rooting_powder'),
+      imageUrl: _img('prod_rooting_powder'),
       asin: 'B000BX1HGC',
       category: 'Indoor Growing',
     ),
@@ -243,7 +247,7 @@ class ShopProduct {
       price: '\$18.99',
       rating: 4.8,
       reviewCount: 4120,
-      imageUrl: _img('photo-1620912167809-e21c7f0e56c6', 'prod_pruning_gloves'),
+      imageUrl: _img('prod_pruning_gloves'),
       asin: 'B073Z1P5QC',
       category: 'Gardening Tools',
     ),
@@ -255,7 +259,7 @@ class ShopProduct {
       price: '\$6.99',
       rating: 4.7,
       reviewCount: 15800,
-      imageUrl: _img('photo-1416879595882-3373a0480b5b', 'prod_plant_food_spikes'),
+      imageUrl: _img('prod_plant_food_spikes'),
       asin: 'B001V57M52',
       category: 'Fertilizers & Soil',
     ),
@@ -267,7 +271,7 @@ class ShopProduct {
       price: '\$9.49',
       rating: 4.6,
       reviewCount: 6420,
-      imageUrl: _img('photo-1574671235952-f6c15a4ebf33', 'prod_leaf_shine'),
+      imageUrl: _img('prod_leaf_shine'),
       asin: 'B000OWB4O6',
       category: 'Pest & Disease Control',
     ),

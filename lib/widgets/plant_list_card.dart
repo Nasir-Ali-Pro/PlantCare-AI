@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
@@ -38,7 +36,9 @@ class PlantListCard extends StatelessWidget {
   String _formatDateShort(DateTime date) => DateFormat('MMM d').format(date);
 
   Widget _buildPlantImage(String imagePath, {double size = 80, double borderRadius = 16}) {
-    if (imagePath.isNotEmpty && (kIsWeb || File(imagePath).existsSync())) {
+    // Delegate to buildPlantImage which handles missing paths via its errorBuilder —
+    // no blocking File.existsSync() needed on the UI thread.
+    if (imagePath.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: buildPlantImage(
@@ -189,10 +189,12 @@ class PlantListCard extends StatelessWidget {
                   _buildStatusPill('THIRSTY', AppTheme.dangerRed),
                 if (plant.needsFertilizing)
                   _buildStatusPill('FERTILIZE', AppTheme.accentAmber),
+                // Show CRITICAL only when the plant isn't already flagged for care actions
+                // (avoids showing both THIRSTY and CRITICAL for the same plant).
+                if (!plant.needsWatering && !plant.needsFertilizing && plant.computedHealthScore < 40)
+                  _buildStatusPill('CRITICAL', AppTheme.dangerRed),
                 if (!plant.needsWatering && !plant.needsFertilizing && plant.computedHealthScore >= 70)
                   _buildStatusPill('HEALTHY', AppTheme.primaryGreen),
-                if (plant.computedHealthScore < 40)
-                  _buildStatusPill('CRITICAL', AppTheme.dangerRed),
                 const Spacer(),
                 // Days info
                 Row(

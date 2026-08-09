@@ -1,15 +1,23 @@
 class AppConstants {
   // ── Database & Asset Configuration ──────────────────────
   static const String treatmentDataPath = 'assets/data/treatment_data.json';
+
+  // ── Amazon Affiliate Tag ──────────────────────────────────
+  // Centralised here so it is consistent across the shop, AI recommendations,
+  // and any future surface. Change this single value to rotate the tag.
+  static const String affiliateTag = '83847-20';
   
   // ── Supabase Configuration ────────────────────────────────
-  // These placeholders serve as fallbacks if the user has not configured their own in Settings
-  static const String defaultSupabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://ljvsigniwvpbmhhxphen.supabase.co');
-  static const String defaultSupabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'sb_publishable_w5MxUBgJjs9zFDcuGhYUHw_cjcZuiB8');
+  // Credentials are injected at build time via --dart-define.
+  // The defaultValue is intentionally left empty so that no live credential
+  // is ever baked into the app binary. The admin API-key flow (fetch from
+  // Supabase → persist to SharedPreferences) continues to work unchanged.
+  static const String defaultSupabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
+  static const String defaultSupabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
 
   // ── Gemini Configuration ────────────────────────────────
   static const String defaultGeminiModel = 'gemini-3.6-flash';
-  static const String defaultGeminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: 'YOUR_GEMINI_API_KEY');
+  static const String defaultGeminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
   
   // ── Shared Preferences Keys ──────────────────────────────
   static const String keyScanHistory = 'scan_history';

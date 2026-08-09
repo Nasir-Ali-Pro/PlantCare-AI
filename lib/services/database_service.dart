@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,16 +7,31 @@ import 'package:path/path.dart' as p;
 import '../models/garden_plant.dart';
 import '../models/diagnosis_report.dart';
 import '../models/chat_message_model.dart';
+import '../models/forum_post.dart';
 
 class DatabaseService {
   static Database? _database;
+  // Completer serialises concurrent first-access calls so _initDatabase()
+  // is only ever executed once, even if two callers race before the DB is open.
+  static Completer<Database>? _initCompleter;
 
   /// Private constructor to prevent instantiation
   DatabaseService._();
 
   static Future<Database> get _db async {
     if (_database != null) return _database!;
-    _database = await _initDatabase();
+    if (_initCompleter != null) return _initCompleter!.future;
+    _initCompleter = Completer<Database>();
+    try {
+      final db = await _initDatabase();
+      _database = db;
+      _initCompleter!.complete(db);
+    } catch (e, st) {
+      final c = _initCompleter!;
+      _initCompleter = null;
+      c.completeError(e, st);
+      rethrow;
+    }
     return _database!;
   }
 
@@ -24,7 +40,7 @@ class DatabaseService {
     final pathString = p.join(dbPath, 'plantcare_local.db');
     final db = await openDatabase(
       pathString,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE garden_plants(
@@ -75,6 +91,39 @@ class DatabaseService {
             timestamp TEXT NOT NULL
           )
         ''');
+        await db.execute('''
+          CREATE TABLE forum_posts(
+            id TEXT PRIMARY KEY,
+            author_name TEXT,
+            author_title TEXT,
+            author_avatar TEXT,
+            is_verified_expert INTEGER,
+            category TEXT,
+            title TEXT,
+            content TEXT,
+            tags TEXT,
+            upvotes INTEGER,
+            is_upvoted INTEGER,
+            attached_image_paths TEXT,
+            diagnosis_name TEXT,
+            created_at TEXT
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE forum_comments(
+            id TEXT PRIMARY KEY,
+            post_id TEXT,
+            parent_comment_id TEXT,
+            author_name TEXT,
+            author_title TEXT,
+            author_avatar TEXT,
+            is_verified_expert INTEGER,
+            content TEXT,
+            upvotes INTEGER,
+            is_upvoted INTEGER,
+            created_at TEXT
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -91,6 +140,41 @@ class DatabaseService {
               text TEXT NOT NULL,
               isUser INTEGER NOT NULL,
               timestamp TEXT NOT NULL
+            )
+          ''');
+        }
+        if (oldVersion < 4) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS forum_posts(
+              id TEXT PRIMARY KEY,
+              author_name TEXT,
+              author_title TEXT,
+              author_avatar TEXT,
+              is_verified_expert INTEGER,
+              category TEXT,
+              title TEXT,
+              content TEXT,
+              tags TEXT,
+              upvotes INTEGER,
+              is_upvoted INTEGER,
+              attached_image_paths TEXT,
+              diagnosis_name TEXT,
+              created_at TEXT
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS forum_comments(
+              id TEXT PRIMARY KEY,
+              post_id TEXT,
+              parent_comment_id TEXT,
+              author_name TEXT,
+              author_title TEXT,
+              author_avatar TEXT,
+              is_verified_expert INTEGER,
+              content TEXT,
+              upvotes INTEGER,
+              is_upvoted INTEGER,
+              created_at TEXT
             )
           ''');
         }
@@ -173,14 +257,11 @@ class DatabaseService {
     }
   }
 
-  /// Saves or updates a single plant in SQLite
+  /// Saves or updates a single plant in SQLite.
+  /// Re-throws on failure so callers can surface the error to the user.
   static Future<void> savePlant(GardenPlant plant) async {
-    try {
-      final db = await _db;
-      await db.insert('garden_plants', _plantToMap(plant), conflictAlgorithm: ConflictAlgorithm.replace);
-    } catch (e) {
-      debugPrint("🚨 Error saving plant to SQLite: $e");
-    }
+    final db = await _db;
+    await db.insert('garden_plants', _plantToMap(plant), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Deletes a plant from SQLite by ID
@@ -453,6 +534,215 @@ class DatabaseService {
       await db.delete('chat_messages');
     } catch (e) {
       debugPrint("🚨 Error clearing chat messages from SQLite: $e");
+    }
+  }
+
+  // ── Forum Persistence ─────────────────────────────────────────────
+
+  /// Saves a single forum post to local SQLite storage.
+  static Future<void> saveForumPost(ForumPost post) async {
+    try {
+      final db = await _db;
+      await db.insert(
+        'forum_posts',
+        {
+          'id': post.id,
+          'author_name': post.authorName,
+          'author_title': post.authorTitle,
+          'author_avatar': post.authorAvatar,
+          'is_verified_expert': post.isVerifiedExpert ? 1 : 0,
+          'category': post.category,
+          'title': post.title,
+          'content': post.content,
+          'tags': json.encode(post.tags),
+          'upvotes': post.upvotes,
+          'is_upvoted': post.isUpvoted ? 1 : 0,
+          'attached_image_paths': json.encode(post.attachedImagePaths),
+          'diagnosis_name': post.diagnosisName,
+          'created_at': post.dateTime.toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      debugPrint("🚨 Error saving forum post to SQLite: $e");
+    }
+  }
+
+  /// Saves a list of forum posts and their comments recursively into SQLite.
+  static Future<void> saveForumPosts(List<ForumPost> posts) async {
+    try {
+      final db = await _db;
+      final batch = db.batch();
+      for (var post in posts) {
+        batch.insert(
+          'forum_posts',
+          {
+            'id': post.id,
+            'author_name': post.authorName,
+            'author_title': post.authorTitle,
+            'author_avatar': post.authorAvatar,
+            'is_verified_expert': post.isVerifiedExpert ? 1 : 0,
+            'category': post.category,
+            'title': post.title,
+            'content': post.content,
+            'tags': json.encode(post.tags),
+            'upvotes': post.upvotes,
+            'is_upvoted': post.isUpvoted ? 1 : 0,
+            'attached_image_paths': json.encode(post.attachedImagePaths),
+            'diagnosis_name': post.diagnosisName,
+            'created_at': post.dateTime.toIso8601String(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        _batchSaveComments(batch, post.id, null, post.comments);
+      }
+      await batch.commit(noResult: true);
+    } catch (e) {
+      debugPrint("🚨 Error saving forum posts batch to SQLite: $e");
+    }
+  }
+
+  static void _batchSaveComments(
+      Batch batch, String postId, String? parentCommentId, List<ForumComment> comments) {
+    for (var c in comments) {
+      batch.insert(
+        'forum_comments',
+        {
+          'id': c.id,
+          'post_id': postId,
+          'parent_comment_id': parentCommentId,
+          'author_name': c.authorName,
+          'author_title': c.authorTitle,
+          'author_avatar': c.authorAvatar,
+          'is_verified_expert': c.isVerifiedExpert ? 1 : 0,
+          'content': c.content,
+          'upvotes': c.upvotes,
+          'is_upvoted': c.isUpvoted ? 1 : 0,
+          'created_at': c.dateTime.toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      if (c.replies.isNotEmpty) {
+        _batchSaveComments(batch, postId, c.id, c.replies);
+      }
+    }
+  }
+
+  /// Saves a single forum comment or reply into SQLite.
+  static Future<void> saveForumComment(
+      String postId, String? parentCommentId, ForumComment comment) async {
+    try {
+      final db = await _db;
+      final cleanParentId = (parentCommentId != null && parentCommentId.trim().isNotEmpty)
+          ? parentCommentId.trim()
+          : null;
+      await db.insert(
+        'forum_comments',
+        {
+          'id': comment.id,
+          'post_id': postId,
+          'parent_comment_id': cleanParentId,
+          'author_name': comment.authorName,
+          'author_title': comment.authorTitle,
+          'author_avatar': comment.authorAvatar,
+          'is_verified_expert': comment.isVerifiedExpert ? 1 : 0,
+          'content': comment.content,
+          'upvotes': comment.upvotes,
+          'is_upvoted': comment.isUpvoted ? 1 : 0,
+          'created_at': comment.dateTime.toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      debugPrint("💾 Saved forum comment/reply ${comment.id} (parentId: $cleanParentId) to local SQLite.");
+    } catch (e) {
+      debugPrint("🚨 Error saving forum comment to SQLite: $e");
+    }
+  }
+
+  /// Loads all cached forum posts and reconstructs nested comment/reply trees from SQLite.
+  static Future<List<ForumPost>> getForumPosts() async {
+    try {
+      final db = await _db;
+      final postsData = await db.query('forum_posts', orderBy: 'created_at DESC');
+      if (postsData.isEmpty) return [];
+
+      final commentsData = await db.query('forum_comments', orderBy: 'created_at ASC');
+
+      final Map<String, ForumComment> commentMap = {};
+      final List<ForumComment> allComments = [];
+
+      for (var c in commentsData) {
+        final commentId = c['id'] as String;
+        final commentObj = ForumComment(
+          id: commentId,
+          authorName: c['author_name'] as String? ?? 'Gardener',
+          authorTitle: c['author_title'] as String? ?? 'Gardener',
+          authorAvatar: c['author_avatar'] as String?,
+          isVerifiedExpert: (c['is_verified_expert'] as int?) == 1,
+          content: c['content'] as String? ?? '',
+          dateTime: DateTime.tryParse(c['created_at'] as String? ?? '') ?? DateTime.now(),
+          upvotes: (c['upvotes'] as int?) ?? 0,
+          isUpvoted: (c['is_upvoted'] as int?) == 1,
+          replies: [],
+        );
+        commentMap[commentId] = commentObj;
+        allComments.add(commentObj);
+      }
+
+      final Map<String, List<ForumComment>> postCommentsMap = {};
+      for (int i = 0; i < commentsData.length; i++) {
+        final cData = commentsData[i];
+        final commentObj = allComments[i];
+        final postId = cData['post_id'] as String;
+        final rawParentId = cData['parent_comment_id'] as String?;
+        final parentId = (rawParentId != null && rawParentId.trim().isNotEmpty) ? rawParentId.trim() : null;
+
+        if (parentId != null && commentMap.containsKey(parentId)) {
+          commentMap[parentId]!.replies.add(commentObj);
+        } else {
+          postCommentsMap.putIfAbsent(postId, () => []).add(commentObj);
+        }
+      }
+
+      final List<ForumPost> posts = [];
+      for (var p in postsData) {
+        final postId = p['id'] as String;
+        List<String> tags = [];
+        if (p['tags'] != null && (p['tags'] as String).isNotEmpty) {
+          try {
+            tags = List<String>.from(json.decode(p['tags'] as String));
+          } catch (_) {}
+        }
+        List<String> attachedImages = [];
+        if (p['attached_image_paths'] != null && (p['attached_image_paths'] as String).isNotEmpty) {
+          try {
+            attachedImages = List<String>.from(json.decode(p['attached_image_paths'] as String));
+          } catch (_) {}
+        }
+
+        posts.add(ForumPost(
+          id: postId,
+          authorName: p['author_name'] as String? ?? 'Gardener',
+          authorTitle: p['author_title'] as String? ?? 'Gardener',
+          authorAvatar: p['author_avatar'] as String?,
+          isVerifiedExpert: (p['is_verified_expert'] as int?) == 1,
+          category: p['category'] as String? ?? 'General',
+          title: p['title'] as String? ?? '',
+          content: p['content'] as String? ?? '',
+          tags: tags,
+          upvotes: (p['upvotes'] as int?) ?? 0,
+          isUpvoted: (p['is_upvoted'] as int?) == 1,
+          comments: postCommentsMap[postId] ?? [],
+          attachedImagePaths: attachedImages,
+          diagnosisName: p['diagnosis_name'] as String?,
+          dateTime: DateTime.tryParse(p['created_at'] as String? ?? '') ?? DateTime.now(),
+        ));
+      }
+
+      return posts;
+    } catch (e) {
+      debugPrint("🚨 Error reading forum posts from SQLite: $e");
+      return [];
     }
   }
 }

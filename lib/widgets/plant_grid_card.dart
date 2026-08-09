@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/theme/app_theme.dart';
@@ -83,7 +81,9 @@ class PlantGridCard extends StatelessWidget {
                   Positioned.fill(
                     child: ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                      child: plant.imagePath.isNotEmpty && (kIsWeb || File(plant.imagePath).existsSync())
+                      // buildPlantImage handles missing/bad paths via its errorBuilder —
+                      // no blocking File.existsSync() needed on the UI thread.
+                      child: plant.imagePath.isNotEmpty
                           ? buildPlantImage(plant.imagePath, fit: BoxFit.cover)
                           : Container(
                               decoration: const BoxDecoration(

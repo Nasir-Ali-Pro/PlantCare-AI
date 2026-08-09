@@ -159,8 +159,13 @@ class NotificationService {
   // ── Time Snapping ─────────────────────────────────────────
 
   /// Snaps a given [targetDate] to the user's configured reminder hour/minute.
-  /// If that time on the target day has already passed, pushes to the next day.
+  ///
+  /// If the reminder time on [targetDate] has already passed today, the result
+  /// is pushed to the **next calendar day** so we never schedule into the past.
+  /// This also handles overdue plants correctly: passing `DateTime.now()` as
+  /// [targetDate] returns the next available reminder slot (today or tomorrow).
   DateTime _snapToReminderTime(DateTime targetDate) {
+    final now = DateTime.now();
     final candidate = DateTime(
       targetDate.year,
       targetDate.month,
@@ -169,7 +174,8 @@ class NotificationService {
       _reminderMinute,
       0,
     );
-    if (candidate.isBefore(DateTime.now())) {
+    // Add a 30-second buffer so we never schedule in the past due to clock skew
+    if (candidate.isBefore(now.add(const Duration(seconds: 30)))) {
       return candidate.add(const Duration(days: 1));
     }
     return candidate;
@@ -191,13 +197,51 @@ class NotificationService {
     int days, {
     DateTime? fromDate,
   }) async {
-    if (days <= 0) {
-      // Plant is already overdue — cancel any stale reminder
-      await cancelWateringReminder(plantId);
-      return;
-    }
     await init();
     if (!_initialized) return;
+
+    if (days <= 0) {
+      // Plant is overdue — reschedule to the next available reminder slot
+      // (today if reminder time hasn't passed yet, otherwise tomorrow) so the
+      // user still gets a nudge rather than silently losing the notification.
+      debugPrint('🔔 "$nickname" is overdue (days=$days) — scheduling catch-up reminder.');
+      final catchUpDate = _snapToReminderTime(DateTime.now());
+
+      final id = _getNotificationId(plantId, 1);
+      try {
+        await _localNotifications.cancel(id);
+        await _localNotifications.zonedSchedule(
+          id,
+          '💧 Water $nickname',
+          '"$nickname" is overdue for watering — give it some love today!',
+          tz.TZDateTime.from(catchUpDate, tz.local),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'watering_reminders',
+              'Watering Reminders',
+              channelDescription: 'Daily reminders to water your plants',
+              importance: Importance.high,
+              priority: Priority.high,
+              playSound: true,
+              icon: '@mipmap/ic_launcher',
+            ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: 'water|$plantId',
+        );
+        debugPrint('🔔 Catch-up watering reminder for "$nickname" scheduled at $catchUpDate');
+      } catch (e) {
+        debugPrint('⚠️ Failed to schedule catch-up watering reminder: $e');
+      }
+      return;
+    }
 
     final id = _getNotificationId(plantId, 1);
     final base = fromDate ?? DateTime.now();
@@ -250,12 +294,49 @@ class NotificationService {
     int days, {
     DateTime? fromDate,
   }) async {
-    if (days <= 0) {
-      await cancelFertilizingReminder(plantId);
-      return;
-    }
     await init();
     if (!_initialized) return;
+
+    if (days <= 0) {
+      // Overdue — schedule a catch-up reminder at the next available slot
+      debugPrint('🔔 "$nickname" is overdue for fertilizing (days=$days) — scheduling catch-up.');
+      final catchUpDate = _snapToReminderTime(DateTime.now());
+
+      final id = _getNotificationId(plantId, 2);
+      try {
+        await _localNotifications.cancel(id);
+        await _localNotifications.zonedSchedule(
+          id,
+          '🧪 Fertilize $nickname',
+          '"$nickname" is overdue for nutrients — time to fertilize today!',
+          tz.TZDateTime.from(catchUpDate, tz.local),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'fertilizing_reminders',
+              'Fertilizing Reminders',
+              channelDescription: 'Periodic reminders to fertilize your plants',
+              importance: Importance.defaultImportance,
+              priority: Priority.defaultPriority,
+              playSound: true,
+              icon: '@mipmap/ic_launcher',
+            ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: 'fertilize|$plantId',
+        );
+        debugPrint('🔔 Catch-up fertilizing reminder for "$nickname" scheduled at $catchUpDate');
+      } catch (e) {
+        debugPrint('⚠️ Failed to schedule catch-up fertilizing reminder: $e');
+      }
+      return;
+    }
 
     final id = _getNotificationId(plantId, 2);
     final base = fromDate ?? DateTime.now();

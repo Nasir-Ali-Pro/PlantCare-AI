@@ -20,7 +20,6 @@ class GardenProvider extends ChangeNotifier {
   String _email = '';
   String _avatarUrl = '';
   String _role = 'user';
-  final bool _hasIntegrityViolation = false;
   bool _isOfflineOnly = false;
   DateTime? _joinedAt;
   
@@ -45,7 +44,6 @@ class GardenProvider extends ChangeNotifier {
   String get avatarUrl => _avatarUrl;
   String get role => _role;
   bool get isAdmin => _role == 'admin';
-  bool get hasIntegrityViolation => _hasIntegrityViolation;
   bool get isOfflineOnly => _isOfflineOnly;
   DateTime? get joinedAt => _joinedAt;
   
@@ -384,12 +382,10 @@ class GardenProvider extends ChangeNotifier {
 
       _plants = importedPlants;
       _username = userVal;
-      _isLoggedIn = true;
-      _isGuest = false;
+      // NOTE: importBackup restores garden data but does NOT grant login status.
+      // Authentication state is managed solely by loginUser/authenticateUser.
       
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('pref_logged_in', true);
-      await prefs.setBool('pref_is_guest', false);
       await prefs.setString('pref_username', _username);
       
       notifyListeners();
@@ -482,6 +478,14 @@ class GardenProvider extends ChangeNotifier {
     await DatabaseService.clearPlants();
     
     await prefs.remove('pref_onboarding_completed');
+    // Clear gamification stats so they don't leak to the next account
+    _careStreak = 0;
+    _scanCount = 0;
+    _lastCareDate = null;
+    _hasDiseasedScan = false;
+    await prefs.remove('pref_care_streak');
+    await prefs.remove('pref_last_care_date');
+    await prefs.remove('pref_scan_count');
 
     // Supabase SignOut and re-signin anonymously to preserve anon role
     if (SupabaseService().isConfigured) {
@@ -506,7 +510,7 @@ class GardenProvider extends ChangeNotifier {
 
   // ── Garden Management Actions (Isar Transactions) ───────────
 
-  String _generateId(String prefix) {
+  String _generateId() {
     return const Uuid().v4();
   }
 
@@ -521,7 +525,7 @@ class GardenProvider extends ChangeNotifier {
     int healthScore = 100,
   }) async {
     final plant = GardenPlant(
-      id: _generateId('pl'),
+      id: _generateId(),
       nickname: nickname,
       species: species,
       scientificName: scientificName,
@@ -703,7 +707,7 @@ class GardenProvider extends ChangeNotifier {
     if (index != -1) {
       final plant = _plants[index];
       final entry = JournalEntry(
-        id: _generateId('jr'),
+        id: _generateId(),
         dateTime: DateTime.now(),
         note: note,
         imagePath: imagePath,

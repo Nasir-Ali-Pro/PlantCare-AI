@@ -165,7 +165,7 @@ class WeatherStreakDashboard extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      weatherInfo?.condition ?? 'Clear',
+                                      weatherInfo?.condition ?? '—',
                                       style: theme.textTheme.titleSmall?.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.onSurface,
@@ -174,7 +174,9 @@ class WeatherStreakDashboard extends StatelessWidget {
                                   ],
                                 ),
                                 Text(
-                                  '${weatherInfo?.temperature != null ? weatherInfo!.temperature.toStringAsFixed(1) : "24"}°C',
+                                  weatherInfo?.temperature != null
+                                      ? '${weatherInfo!.temperature.toStringAsFixed(1)}°C'
+                                      : '—',
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -190,14 +192,18 @@ class WeatherStreakDashboard extends StatelessWidget {
                                   icon: Icons.water_drop_rounded,
                                   iconColor: Colors.lightBlue,
                                   label: 'Humidity',
-                                  value: '${weatherInfo?.humidity ?? 60}%',
+                                  value: weatherInfo?.humidity != null
+                                    ? '${weatherInfo!.humidity}%'
+                                    : '—',
                                   theme: theme,
                                 ),
                                 _buildWeatherMetricBadge(
                                   icon: Icons.wb_sunny_rounded,
                                   iconColor: Colors.amber,
                                   label: 'UV Index',
-                                  value: '${weatherInfo?.uvIndex ?? 5.0}',
+                                  value: weatherInfo?.uvIndex != null
+                                    ? '${weatherInfo!.uvIndex}'
+                                    : '—',
                                   theme: theme,
                                 ),
                               ],

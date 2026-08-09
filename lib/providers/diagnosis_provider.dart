@@ -142,7 +142,7 @@ class DiagnosisProvider extends ChangeNotifier {
             _gemini.init(_geminiApiKey);
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('gemini_api_key', _geminiApiKey);
-            debugPrint("🔑 Loaded central API key from Supabase admin profile: $_geminiApiKey");
+            debugPrint("🔑 Central Gemini API key loaded from Supabase admin profile.");
           }
         }
       }

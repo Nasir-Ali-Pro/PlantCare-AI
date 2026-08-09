@@ -16,6 +16,7 @@ import '../history/history_screen.dart';
 import '../result/result_screen.dart';
 import '../forum/forum_screen.dart';
 import '../profile/profile_screen.dart';
+import '../garden/my_garden_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -81,99 +82,107 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, setModalState) {
             return Consumer<DiagnosisProvider>(
               builder: (context, provider, child) {
+                final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+                final screenHeight = MediaQuery.of(context).size.height;
                 return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                  ),
-                  child: AppCard(
-                    borderRadius: 24,
-                    color: AppColors.surfaceElevated,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  padding: EdgeInsets.only(bottom: bottomInset),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: screenHeight * 0.9 - bottomInset,
+                    ),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: AppCard(
+                        borderRadius: 24,
+                        color: AppColors.surfaceElevated,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Settings',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.onSurface,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: const Icon(Icons.close_rounded, color: AppColors.onSurfaceMuted),
+                                ),
+                              ],
+                            ),
+                            const Divider(color: AppColors.border, height: 24),
+                            
+                            // API Key Input
                             const Text(
-                              'Settings',
+                              'Gemini API Key',
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.onSurface,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.close_rounded, color: AppColors.onSurfaceMuted),
-                            ),
-                          ],
-                        ),
-                        const Divider(color: AppColors.border, height: 24),
-                        
-                        // API Key Input
-                        const Text(
-                          'Gemini API Key',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.onSurfaceMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _apiKeyController,
-                          obscureText: _obscureApiKey,
-                          style: const TextStyle(color: AppColors.onSurface, fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Enter your Gemini API key...',
-                            hintStyle: const TextStyle(color: AppColors.onSurfaceFaint, fontSize: 13),
-                            prefixIcon: const Icon(Icons.vpn_key_rounded, color: AppColors.primary),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureApiKey ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                                 color: AppColors.onSurfaceMuted,
                               ),
-                              onPressed: () {
-                                setModalState(() {
-                                  _obscureApiKey = !_obscureApiKey;
-                                });
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _apiKeyController,
+                              obscureText: _obscureApiKey,
+                              style: const TextStyle(color: AppColors.onSurface, fontSize: 14),
+                              decoration: InputDecoration(
+                                hintText: 'Enter your Gemini API key...',
+                                hintStyle: const TextStyle(color: AppColors.onSurfaceFaint, fontSize: 13),
+                                prefixIcon: const Icon(Icons.vpn_key_rounded, color: AppColors.primary),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureApiKey ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                    color: AppColors.onSurfaceMuted,
+                                  ),
+                                  onPressed: () {
+                                    setModalState(() {
+                                      _obscureApiKey = !_obscureApiKey;
+                                    });
+                                  },
+                                ),
+                                filled: true,
+                                fillColor: AppColors.surfaceHighlight,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppColors.border, width: 1.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                                ),
+                              ),
+                              onChanged: (val) {
+                                provider.setGeminiApiKey(val);
                               },
                             ),
-                            filled: true,
-                            fillColor: AppColors.surfaceHighlight,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: AppColors.border, width: 1.0),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                            ),
-                          ),
-                          onChanged: (val) {
-                            provider.setGeminiApiKey(val);
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        const Row(
-                          children: [
-                             Icon(Icons.info_outline_rounded, size: 14, color: AppColors.warning),
-                             SizedBox(width: 6),
-                             Expanded(
-                               child: Text(
-                                 'Required for detailed plant disease analysis.',
-                                 style: TextStyle(
-                                   color: AppColors.onSurfaceMuted,
-                                   fontSize: 11,
+                            const SizedBox(height: 10),
+                            const Row(
+                              children: [
+                                 Icon(Icons.info_outline_rounded, size: 14, color: AppColors.warning),
+                                 SizedBox(width: 6),
+                                 Expanded(
+                                   child: Text(
+                                     'Required for detailed plant disease analysis.',
+                                     style: TextStyle(
+                                       color: AppColors.onSurfaceMuted,
+                                       fontSize: 11,
+                                     ),
+                                   ),
                                  ),
-                               ),
-                             ),
+                              ],
+                            ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 );
@@ -887,23 +896,30 @@ class _HomeScreenState extends State<HomeScreen> {
               const Divider(color: AppColors.border, height: 16),
               GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please open the Garden tab to see all care alerts.'),
-                      duration: Duration(seconds: 2),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyGardenScreen(),
                     ),
                   );
                 },
                 child: const Center(
                   child: Padding(
                     padding: EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      'View all care tasks',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryLight,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'View all care tasks',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryLight,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_rounded, size: 12, color: AppColors.primaryLight),
+                      ],
                     ),
                   ),
                 ),

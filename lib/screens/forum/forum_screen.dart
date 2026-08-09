@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/garden_provider.dart';
 import '../../models/forum_post.dart';
 import '../../services/api/supabase_service.dart';
+import '../../services/database_service.dart';
 import '../../services/image_service.dart';
 import '../../core/utils/error_utils.dart';
 
@@ -162,18 +163,32 @@ class _ForumScreenState extends State<ForumScreen> {
     setState(() {
       _isLoading = true;
       _currentPage = 0;
-      _posts = [];
       _hasMorePosts = true;
     });
-    final posts = await SupabaseService().fetchForumPostsPaginated(
+
+    // 1. Instant local load from SQLite so offline or re-opened app shows cached posts & replies immediately
+    final localPosts = await DatabaseService.getForumPosts();
+    if (localPosts.isNotEmpty && mounted) {
+      setState(() {
+        _posts = localPosts;
+        _isLoading = false;
+      });
+    }
+
+    // 2. Fetch fresh posts from Supabase in background
+    final freshPosts = await SupabaseService().fetchForumPostsPaginated(
       page: 0,
       pageSize: _pageSize,
     );
-    setState(() {
-      _posts = posts;
-      _isLoading = false;
-      _hasMorePosts = posts.length >= _pageSize;
-    });
+    if (mounted) {
+      setState(() {
+        if (freshPosts.isNotEmpty) {
+          _posts = freshPosts;
+        }
+        _isLoading = false;
+        _hasMorePosts = _posts.length >= _pageSize;
+      });
+    }
   }
 
   Future<void> _loadMorePosts() async {
@@ -854,10 +869,18 @@ class _ForumScreenState extends State<ForumScreen> {
     final titleController = TextEditingController(text: prefilledTitle);
     final contentController = TextEditingController(text: prefilledContent);
     final tagsController = TextEditingController(text: prefilledTags.join(', '));
-    String category = 'General';
+    // Pre-select Disease Diagnosis when coming from the result/scan screen.
+    // Capture a locally-promoted non-null path so Dart's flow analysis can
+    // confirm nullability without requiring the `!` operator.
+    final String? effectiveAutoPath =
+        (autoAttachImagePath != null && autoAttachImagePath.isNotEmpty)
+            ? autoAttachImagePath
+            : null;
+    final bool hasAutoAttach = effectiveAutoPath != null;
+    String category = hasAutoAttach ? 'Disease Diagnosis' : 'General';
     List<File> attachedImages = [];
-    if (autoAttachImagePath != null && autoAttachImagePath.isNotEmpty) {
-      final f = File(autoAttachImagePath);
+    if (effectiveAutoPath != null) {
+      final f = File(effectiveAutoPath); // promoted — no ! needed
       if (f.existsSync()) {
         attachedImages.add(f);
       }
@@ -958,6 +981,63 @@ class _ForumScreenState extends State<ForumScreen> {
                     ),
                     const SizedBox(height: 12),
 
+                    // ── Auto-Attach Diagnosis Banner ─────────────────────────
+                    if (hasAutoAttach && attachedImages.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.35),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreen.withValues(alpha: 0.18),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.science_rounded,
+                                size: 16,
+                                color: AppTheme.primaryGreen,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Diagnosis Image Attached',
+                                    style: TextStyle(
+                                      color: AppTheme.primaryGreen,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Your scan result has been automatically attached to help the community assist you.',
+                                    style: TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 11,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
                     // Attached images preview strip
                     if (attachedImages.isNotEmpty) ...[
                       SizedBox(
@@ -967,6 +1047,8 @@ class _ForumScreenState extends State<ForumScreen> {
                           itemCount: attachedImages.length,
                           itemBuilder: (context, idx) {
                             final file = attachedImages[idx];
+                            // First image is auto-attached diagnosis image
+                            final isAutoAttached = hasAutoAttach && idx == 0;
                             return Stack(
                               children: [
                                 Container(
@@ -975,13 +1057,44 @@ class _ForumScreenState extends State<ForumScreen> {
                                   height: 80,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    
+                                    border: isAutoAttached
+                                        ? Border.all(
+                                            color: AppTheme.primaryGreen
+                                                .withValues(alpha: 0.6),
+                                            width: 1.5,
+                                          )
+                                        : null,
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: buildPlantImageFile(file, fit: BoxFit.cover),
+                                    child: buildPlantImageFile(file,
+                                        fit: BoxFit.cover),
                                   ),
                                 ),
+                                // Auto-attach badge
+                                if (isAutoAttached)
+                                  Positioned(
+                                    left: 4,
+                                    bottom: 4,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryGreen
+                                            .withValues(alpha: 0.9),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        'AUTO',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 7,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 Positioned(
                                   right: 4,
                                   top: 4,
@@ -997,7 +1110,8 @@ class _ForumScreenState extends State<ForumScreen> {
                                         color: Colors.black54,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
+                                      child: const Icon(Icons.close_rounded,
+                                          size: 14, color: Colors.white),
                                     ),
                                   ),
                                 ),
@@ -1627,7 +1741,7 @@ class _ForumScreenState extends State<ForumScreen> {
                               ),
                               child: IconButton(
                                 icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
-                                onPressed: () {
+                                onPressed: () async {
                                   if (isGuest) {
                                     _showAuthBarrierDialog(context, 'comment on posts');
                                     return;
@@ -1655,7 +1769,7 @@ class _ForumScreenState extends State<ForumScreen> {
 
                                   setState(() {});
                                   commentController.clear();
-                                  SupabaseService().createForumComment(post.id, parentId, newCommentObj);
+                                  await SupabaseService().createForumComment(post.id, parentId, newCommentObj);
                                 },
                               ),
                             ),

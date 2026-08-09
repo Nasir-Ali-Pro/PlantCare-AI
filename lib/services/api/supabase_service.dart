@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io'; // Import for Platform check
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,6 +7,7 @@ import '../../core/constants/app_constants.dart';
 import '../../models/diagnosis_report.dart';
 import '../../models/forum_post.dart';
 import '../../models/shop_product.dart';
+import '../database_service.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -25,7 +26,12 @@ class SupabaseService {
       // But supabase_flutter doesn't support easy re-initialization directly without closing/resetting.
       // We can use Supabase.initialize if not already initialized.
       if (!_isInitialized) {
-        final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
+        // kIsWeb / some environments don't support Platform.environment —
+        // wrap in a try/catch so initialization never fails because of this.
+        bool isTesting = false;
+        try {
+          isTesting = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+        } catch (_) {}
         await Supabase.initialize(
           url: url,
           anonKey: anonKey,
@@ -263,15 +269,20 @@ class SupabaseService {
         ));
       }
 
+      // Cache posts to local SQLite for offline access
+      await DatabaseService.saveForumPosts(posts);
+
       return posts;
     } catch (e) {
-      debugPrint("⚠️ Failed to fetch forum posts from Supabase: $e");
-      return [];
+      debugPrint("⚠️ Failed to fetch forum posts from Supabase: $e — returning local cache.");
+      return await DatabaseService.getForumPosts();
     }
   }
 
-  /// Create a new forum post in Supabase
+  /// Create a new forum post in Supabase and local SQLite
   Future<void> createForumPost(ForumPost post) async {
+    // Always persist locally first so content is never lost
+    await DatabaseService.saveForumPost(post);
     if (!_isInitialized) return;
     try {
       await client.from('forum_posts').insert({
@@ -289,19 +300,27 @@ class SupabaseService {
         'diagnosis_name': post.diagnosisName,
         'created_at': post.dateTime.toUtc().toIso8601String(),
       });
+      debugPrint("💬 Forum post ${post.id} synced to Supabase.");
     } catch (e) {
       debugPrint("⚠️ Failed to create forum post in Supabase: $e");
     }
   }
 
-  /// Create a new forum comment in Supabase
+  /// Create a new forum comment/reply in Supabase and local SQLite
   Future<void> createForumComment(String postId, String? parentCommentId, ForumComment comment) async {
+    final cleanParentId = (parentCommentId != null && parentCommentId.trim().isNotEmpty)
+        ? parentCommentId.trim()
+        : null;
+
+    // Always persist locally first so reply is immediately stored in SQLite
+    await DatabaseService.saveForumComment(postId, cleanParentId, comment);
+
     if (!_isInitialized) return;
     try {
       await client.from('forum_comments').insert({
         'id': comment.id,
         'post_id': postId,
-        'parent_comment_id': parentCommentId,
+        'parent_comment_id': cleanParentId,
         'author_name': comment.authorName,
         'author_title': comment.authorTitle,
         'author_avatar': comment.authorAvatar,
@@ -310,6 +329,7 @@ class SupabaseService {
         'upvotes': comment.upvotes,
         'created_at': comment.dateTime.toUtc().toIso8601String(),
       });
+      debugPrint("💬 Forum comment/reply ${comment.id} (parentId: $cleanParentId) synced to Supabase.");
     } catch (e) {
       debugPrint("⚠️ Failed to create forum comment in Supabase: $e");
     }
@@ -395,9 +415,19 @@ class SupabaseService {
         ));
       }
 
+      // Cache paginated posts to SQLite
+      await DatabaseService.saveForumPosts(posts);
+
       return posts;
     } catch (e) {
-      debugPrint('⚠️ Failed to fetch paginated forum posts: $e');
+      debugPrint('⚠️ Failed to fetch paginated forum posts: $e — returning local cache.');
+      final localPosts = await DatabaseService.getForumPosts();
+      if (localPosts.isNotEmpty) {
+        final int from = page * pageSize;
+        if (from >= localPosts.length) return [];
+        final int to = (from + pageSize > localPosts.length) ? localPosts.length : from + pageSize;
+        return localPosts.sublist(from, to);
+      }
       return [];
     }
   }
