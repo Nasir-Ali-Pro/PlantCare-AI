@@ -184,6 +184,8 @@ class _ForumScreenState extends State<ForumScreen> {
       setState(() {
         if (freshPosts.isNotEmpty) {
           _posts = freshPosts;
+        } else if (_posts.isEmpty) {
+          _posts = localPosts.isNotEmpty ? localPosts : ForumPost.defaultPosts;
         }
         _isLoading = false;
         _hasMorePosts = _posts.length >= _pageSize;

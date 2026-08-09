@@ -664,7 +664,12 @@ class DatabaseService {
     try {
       final db = await _db;
       final postsData = await db.query('forum_posts', orderBy: 'created_at DESC');
-      if (postsData.isEmpty) return [];
+      if (postsData.isEmpty) {
+        debugPrint("🚚 Seeding local SQLite with default curated forum posts & comments...");
+        final defaults = ForumPost.defaultPosts;
+        await saveForumPosts(defaults);
+        return defaults;
+      }
 
       final commentsData = await db.query('forum_comments', orderBy: 'created_at ASC');
 
