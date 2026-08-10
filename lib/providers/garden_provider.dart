@@ -180,6 +180,7 @@ class GardenProvider extends ChangeNotifier {
 
   Future<void> registerUser(String name, String email, String password) async {
     final sanitizedEmail = email.trim().toLowerCase();
+    final sanitizedName = SecurityService.sanitize(name);
     
     if (!SupabaseService().isConfigured) {
       throw Exception("Supabase is not configured. Unable to register.");
@@ -197,7 +198,6 @@ class GardenProvider extends ChangeNotifier {
     }
     
     final userId = authResponse.user!.id;
-    final sanitizedName = SecurityService.sanitize(name);
     
     // Sync profile row — role defaults to 'user'
     await SupabaseService().syncUserProfile(
