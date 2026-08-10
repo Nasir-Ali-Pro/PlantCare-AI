@@ -10,7 +10,7 @@ class EncyclopediaItem {
   final String nativeRegion;
   final String toxicity; // Description of pet/child toxicity
   final String description;
-  final String imageUrl; // Dedicated high-resolution plant profile image
+  final String imageUrl; // Bundled offline asset image path
   final List<String> funFacts;
 
   EncyclopediaItem({
@@ -29,7 +29,7 @@ class EncyclopediaItem {
     required this.funFacts,
   });
 
-  /// Verified plant profile image URLs for all encyclopedia species
+  /// High-resolution bundled plant profile images for all encyclopedia species
   static final List<EncyclopediaItem> defaultItems = [
     EncyclopediaItem(
       id: 'ep_1',
@@ -43,7 +43,7 @@ class EncyclopediaItem {
       nativeRegion: 'South America (Andes)',
       toxicity: 'Foliage and stems are toxic to cats and dogs (solanine); ripe fruit is safe.',
       description: 'Tomatoes are tender, warm-season annuals that produce sweet, juicy fruits. They are a staple of backyard gardens and require sturdy staking as they grow.',
-      imageUrl: 'https://images.pexels.com/photos/1327838/pexels-photo-1327838.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/tomato.jpg',
       funFacts: [
         'Botanically, tomatoes are berries and thus fruits, but they are culinarily used as vegetables.',
         'The largest tomato plant on record was grown in a greenhouse in Florida and reached over 65 feet long!'
@@ -61,7 +61,7 @@ class EncyclopediaItem {
       nativeRegion: 'South American Andes',
       toxicity: 'Green parts of the plant and green tubers contain solanine, which is highly toxic to humans and pets.',
       description: 'Potatoes are starch-rich tuberous root crops that grow completely underground. They are highly productive and enjoy cool-season soil hilling.',
-      imageUrl: 'https://images.pexels.com/photos/2286776/pexels-photo-2286776.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/potato.jpg',
       funFacts: [
         'Potatoes were the first vegetable ever to be grown in outer space, aboard the Space Shuttle Columbia in 1995.',
         'There are over 4,000 native varieties of potatoes, mostly found in the Andes.'
@@ -79,7 +79,7 @@ class EncyclopediaItem {
       nativeRegion: 'Central Asia',
       toxicity: 'Apple seeds contain amygdalin, which releases cyanide when chewed; highly toxic in large quantities.',
       description: 'Apple trees are deciduous orchard trees that require winter chilling hours to successfully set fruit. They are prone to fungal scab but reward growers with fresh, crisp fruit.',
-      imageUrl: 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/apple.jpg',
       funFacts: [
         'It takes about 36 apples to make one gallon of apple cider.',
         'Archeologists have found evidence that humans have been eating apples since at least 6500 B.C.'
@@ -97,7 +97,7 @@ class EncyclopediaItem {
       nativeRegion: 'Central & South America',
       toxicity: 'Leaves and stems are mildly toxic to pets; the pepper fruit is entirely safe.',
       description: 'Bell peppers are warm-season vegetables that change color from green to red, yellow, or orange as they mature. They are sweet and contain high amounts of Vitamin C.',
-      imageUrl: 'https://images.pexels.com/photos/1434254/pexels-photo-1434254.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/bell_pepper.jpg',
       funFacts: [
         'Bell peppers are the only member of the Capsicum family that do not produce capsaicin, meaning they have 0 Scoville Heat Units.',
         'Red bell peppers are simply green peppers that have been left on the vine longer to ripen.'
@@ -115,7 +115,7 @@ class EncyclopediaItem {
       nativeRegion: 'Mexico',
       toxicity: 'Non-toxic to pets and children.',
       description: 'Corn is a tall annual cereal grass that produces ears containing sweet kernels. It is wind-pollinated and grows best in blocks rather than single rows.',
-      imageUrl: 'https://images.pexels.com/photos/547263/pexels-photo-547263.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/corn.jpg',
       funFacts: [
         'An average ear of corn has an even number of rows, usually 16, and contains about 800 kernels.',
         'Corn is grown on every continent except Antarctica.'
@@ -133,7 +133,7 @@ class EncyclopediaItem {
       nativeRegion: 'Mediterranean & Middle East',
       toxicity: 'Grapes and raisins are highly toxic to dogs and can cause acute kidney failure.',
       description: 'Grapes are climbing woody vines that produce bunches of sweet table or wine berries. They require extensive annual winter pruning and robust trellis support.',
-      imageUrl: 'https://images.pexels.com/photos/708777/pexels-photo-708777.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/grapevine.jpg',
       funFacts: [
         'Vitis vinifera grapevines can live for over 100 years with proper root care.',
         'It takes about 2.5 pounds of grapes to produce one standard 750ml bottle of wine.'
@@ -151,7 +151,7 @@ class EncyclopediaItem {
       nativeRegion: 'Europe / North America',
       toxicity: 'Non-toxic to cats, dogs, and children.',
       description: 'Strawberries are low-growing herbaceous perennials that produce runners and juicy, bright red berries. They are ideal for ground cover or hanging pots.',
-      imageUrl: 'https://images.pexels.com/photos/89778/strawberries-frisch-ripe-sweet-89778.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/strawberry.jpg',
       funFacts: [
         'Strawberries are the only fruit that wear their seeds on the outside—an average strawberry has about 200 seeds.',
         'Strawberries are actually members of the Rose family!'
@@ -169,7 +169,7 @@ class EncyclopediaItem {
       nativeRegion: 'Tropical Rainforests of Southern Mexico',
       toxicity: 'Contains insoluble calcium oxalates; toxic to cats and dogs if chewed.',
       description: 'The Swiss Cheese Plant is famous for its iconic perforated split leaves. It thrives indoors with sturdy support like a moss pole.',
-      imageUrl: 'https://images.pexels.com/photos/3097770/pexels-photo-3097770.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/monstera.jpg',
       funFacts: [
         'The holes in Monstera leaves are called fenestrations and help the plant withstand heavy tropical rains.',
         'In the wild, Monstera produces edible tropical fruits that taste like a blend of banana and pineapple!'
@@ -187,7 +187,7 @@ class EncyclopediaItem {
       nativeRegion: 'West Africa',
       toxicity: 'Mildly toxic to cats and dogs due to saponins; causes nausea if consumed.',
       description: 'Snake Plant is an indestructible air-purifying houseplant featuring sword-like upright leaves with yellow margins.',
-      imageUrl: 'https://images.pexels.com/photos/212372/pexels-photo-212372.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/snake_plant.jpg',
       funFacts: [
         'Snake plants perform CAM photosynthesis, releasing oxygen into your bedroom during the night.',
         'They can go up to 4 to 6 weeks without watering during winter months.'
@@ -205,7 +205,7 @@ class EncyclopediaItem {
       nativeRegion: 'Tropical Americas',
       toxicity: 'Toxic to pets due to calcium oxalate crystals.',
       description: 'Peace Lilies are graceful indoor plants known for their glossy green foliage and pure white spathe blooms.',
-      imageUrl: 'https://images.pexels.com/photos/4503751/pexels-photo-4503751.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/peace_lily.jpg',
       funFacts: [
         'Peace Lilies dramatically drop their leaves when thirsty, instantly perking back up within an hour of watering.',
         'Ranked by NASA as one of the top air-purifying indoor plants for removing formaldehyde and benzene.'
@@ -223,7 +223,7 @@ class EncyclopediaItem {
       nativeRegion: 'Europe and Western Asia',
       toxicity: 'Non-toxic to pets; thorns can cause mechanical irritation.',
       description: 'Roses are woody perennial flowering shrubs prized for their fragrant multi-petaled blooms and classic garden elegance.',
-      imageUrl: 'https://images.pexels.com/photos/736230/pexels-photo-736230.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/rose.jpg',
       funFacts: [
         'Fossilized rose leaves dating back 35 million years have been discovered in North America.',
         'Rose hips (the fruit of the rose) contain higher concentrations of Vitamin C than oranges!'
@@ -241,7 +241,7 @@ class EncyclopediaItem {
       nativeRegion: 'Arabian Peninsula',
       toxicity: 'Toxic to pets if latex layer under skin is ingested; inner gel is non-toxic.',
       description: 'Aloe Vera is a medicinal succulent with thick fleshy leaves filled with soothing, clear cooling gel.',
-      imageUrl: 'https://images.pexels.com/photos/1382393/pexels-photo-1382393.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/aloe_vera.jpg',
       funFacts: [
         'Aloe vera gel has been used for over 4,000 years to treat minor skin burns and wounds.',
         'Ancient Egyptians called Aloe Vera the "Plant of Immortality".'
@@ -259,7 +259,7 @@ class EncyclopediaItem {
       nativeRegion: 'Mediterranean',
       toxicity: 'Mildly toxic to pets in large quantities (linalool).',
       description: 'Lavender is a aromatic evergreen shrub with silvery foliage and spikes of fragrant violet-purple blossoms.',
-      imageUrl: 'https://images.pexels.com/photos/1166869/pexels-photo-1166869.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/lavender.jpg',
       funFacts: [
         'The name Lavender comes from the Latin word "lavare", which means "to wash".',
         'Lavender essential oil is proven to promote relaxation and improve sleep quality.'
@@ -277,7 +277,7 @@ class EncyclopediaItem {
       nativeRegion: 'Central Africa & Southeast Asia',
       toxicity: 'Completely non-toxic to cats, dogs, and humans.',
       description: 'Sweet Basil is an aromatic culinary herb with tender green leaves essential for pestos and Mediterranean cuisine.',
-      imageUrl: 'https://images.pexels.com/photos/1087902/pexels-photo-1087902.jpeg?auto=compress&cs=tinysrgb&w=800',
+      imageUrl: 'assets/images/encyclopedia/basil.jpg',
       funFacts: [
         'Pinching off flower buds promotes bushy leaf growth and extends the harvest season.',
         'In Italian tradition, placing a pot of basil on a balcony signifies readiness for romance!'

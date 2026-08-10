@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/encyclopedia_item.dart';
 import '../../providers/garden_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/plant_image.dart';
 
 
 
@@ -79,50 +79,11 @@ class _EncyclopediaScreenState extends State<EncyclopediaScreen> {
                   const SizedBox(height: 16),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: item.imageUrl,
-                          height: 210,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            height: 210,
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                            child: const Center(
-                              child: CircularProgressIndicator(color: AppTheme.primaryGreen),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            height: 210,
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                            child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 60),
-                          ),
-                        ),
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.65),
-                              borderRadius: BorderRadius.circular(100),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.camera_alt_rounded, color: Colors.white70, size: 12),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Unsplash HD',
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: buildPlantImage(
+                      item.imageUrl,
+                      height: 210,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -389,29 +350,11 @@ class _EncyclopediaScreenState extends State<EncyclopediaScreen> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(16),
-                                      child: CachedNetworkImage(
-                                        imageUrl: item.imageUrl,
+                                      child: buildPlantImage(
+                                        item.imageUrl,
                                         width: 68,
                                         height: 68,
                                         fit: BoxFit.cover,
-                                        placeholder: (context, url) => Container(
-                                          width: 68,
-                                          height: 68,
-                                          color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                                          child: const Center(
-                                            child: SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen),
-                                            ),
-                                          ),
-                                        ),
-                                        errorWidget: (context, url, error) => Container(
-                                          width: 68,
-                                          height: 68,
-                                          color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                                          child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 28),
-                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 16),
