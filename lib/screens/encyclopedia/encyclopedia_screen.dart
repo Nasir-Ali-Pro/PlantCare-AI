@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +23,17 @@ class _EncyclopediaScreenState extends State<EncyclopediaScreen> {
   String _selectedCategory = 'All';
   Timer? _debounceTimer;
 
-  final List<String> _categories = ['All', 'Vegetable', 'Fruit', 'Fruit Tree'];
+  final List<String> _categories = [
+    'All',
+    'Vegetable',
+    'Fruit',
+    'Fruit Tree',
+    'Fruit Vine',
+    'Houseplant',
+    'Succulent',
+    'Herb',
+    'Flower',
+  ];
 
   Color _getDifficultyColor(String difficulty) {
     switch (difficulty.toLowerCase()) {
@@ -63,6 +74,55 @@ class _EncyclopediaScreenState extends State<EncyclopediaScreen> {
                         color: Colors.white24,
                         borderRadius: BorderRadius.circular(100),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: item.imageUrl,
+                          height: 210,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            height: 210,
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                            child: const Center(
+                              child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            height: 210,
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                            child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 60),
+                          ),
+                        ),
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(100),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.camera_alt_rounded, color: Colors.white70, size: 12),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Unsplash HD',
+                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -327,13 +387,32 @@ class _EncyclopediaScreenState extends State<EncyclopediaScreen> {
                                 borderRadius: 20,
                                 child: Row(
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                                        shape: BoxShape.circle,
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: CachedNetworkImage(
+                                        imageUrl: item.imageUrl,
+                                        width: 68,
+                                        height: 68,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) => Container(
+                                          width: 68,
+                                          height: 68,
+                                          color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                                          child: const Center(
+                                            child: SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen),
+                                            ),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) => Container(
+                                          width: 68,
+                                          height: 68,
+                                          color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                                          child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 28),
+                                        ),
                                       ),
-                                      child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 28),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
