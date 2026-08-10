@@ -189,6 +189,7 @@ class GardenProvider extends ChangeNotifier {
     final authResponse = await SupabaseService().client.auth.signUp(
       email: sanitizedEmail,
       password: password,
+      data: {'full_name': sanitizedName},
     );
     
     if (authResponse.user == null) {
