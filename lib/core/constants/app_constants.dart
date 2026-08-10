@@ -8,12 +8,14 @@ class AppConstants {
   static const String affiliateTag = '83847-20';
   
   // ── Supabase Configuration ────────────────────────────────
-  // Credentials are injected at build time via --dart-define.
-  // The defaultValue is intentionally left empty so that no live credential
-  // is ever baked into the app binary. The admin API-key flow (fetch from
-  // Supabase → persist to SharedPreferences) continues to work unchanged.
-  static const String defaultSupabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
-  static const String defaultSupabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
+  static const String defaultSupabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://ljvsigniwvpbmhhxphen.supabase.co',
+  );
+  static const String defaultSupabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: 'sb_publishable_w5MxUBgJjs9zFDcuGhYUHw_cjcZuiB8',
+  );
 
   // ── Gemini Configuration ────────────────────────────────
   static const String defaultGeminiModel = 'gemini-3.6-flash';
