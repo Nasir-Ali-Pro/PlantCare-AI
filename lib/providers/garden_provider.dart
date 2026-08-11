@@ -478,7 +478,6 @@ class GardenProvider extends ChangeNotifier {
     // Clear local database
     await DatabaseService.clearPlants();
     
-    await prefs.remove('pref_onboarding_completed');
     // Clear gamification stats so they don't leak to the next account
     _careStreak = 0;
     _scanCount = 0;
