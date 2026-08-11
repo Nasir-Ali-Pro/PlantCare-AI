@@ -50,6 +50,17 @@ class GardenProvider extends ChangeNotifier {
   int get careStreak => _careStreak;
   int get scanCount => _scanCount;
 
+  /// Dynamic user rank title based on unlocked achievements, garden size, and role
+  String get userRankTitle {
+    if (_isGuest) return 'Guest Gardener';
+    if (_role == 'admin') return 'Admin Botanist';
+    if (_plants.length >= 7) return 'Master Botanist';
+    if (_careStreak >= 3) return 'Dedicated Carer';
+    if (_plants.length >= 3) return 'Green Thumb';
+    if (_scanCount > 0) return 'Plant Explorer';
+    return 'Botanical Member';
+  }
+
   GardenProvider() {
     _loadGardenData();
   }

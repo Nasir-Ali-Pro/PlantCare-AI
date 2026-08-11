@@ -1224,7 +1224,7 @@ class _ForumScreenState extends State<ForumScreen> {
                           final newPost = ForumPost(
                             id: _generateUUID(),
                             authorName: gardenProvider.username,
-                            authorTitle: gardenProvider.isGuest ? 'Guest Gardener' : 'Botanical Member',
+                            authorTitle: gardenProvider.userRankTitle,
                             authorAvatar: gardenProvider.avatarUrl.isNotEmpty ? gardenProvider.avatarUrl : null,
                             isVerifiedExpert: false,
                             category: category,
@@ -1753,7 +1753,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                   final newCommentObj = ForumComment(
                                     id: _generateUUID(),
                                     authorName: gardenProvider.username,
-                                    authorTitle: gardenProvider.isGuest ? 'Guest Gardener' : 'Botanical Member',
+                                    authorTitle: gardenProvider.userRankTitle,
                                     authorAvatar: gardenProvider.avatarUrl.isNotEmpty ? gardenProvider.avatarUrl : null,
                                     content: commentController.text.trim(),
                                     dateTime: DateTime.now(),
