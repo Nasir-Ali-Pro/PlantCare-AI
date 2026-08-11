@@ -9,7 +9,7 @@ void main() {
 
   testWidgets('PlantCareApp boots up smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const PlantCareApp());
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(seconds: 2));
 
     expect(find.byType(PlantCareApp), findsOneWidget);
   });
