@@ -82,6 +82,14 @@ class PlantCareApp extends StatelessWidget {
         title: 'PlantCare AI',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
+        builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          final clampedScaler = mediaQuery.textScaler.clamp(minScaleFactor: 0.85, maxScaleFactor: 1.15);
+          return MediaQuery(
+            data: mediaQuery.copyWith(textScaler: clampedScaler),
+            child: child!,
+          );
+        },
         home: const SplashScreen(),
         routes: {
           '/privacy-policy': (ctx) => const LegalScreen(isPrivacyPolicy: true),

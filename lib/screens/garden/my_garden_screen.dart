@@ -363,29 +363,37 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
             padding: EdgeInsets.only(right: i < stats.length - 1 ? 8 : 0),
             child: AppCard(
               borderRadius: 16,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(s.icon, color: s.color, size: 18),
                   const SizedBox(height: 4),
-                  Text(
-                    s.value,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white.withValues(alpha: 0.95),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      s.value,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white.withValues(alpha: 0.95),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    s.label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                      color: Colors.white.withValues(alpha: 0.45),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      s.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                        color: Colors.white.withValues(alpha: 0.45),
+                      ),
                     ),
                   ),
                 ],
