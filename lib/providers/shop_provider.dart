@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../core/constants/app_constants.dart';
 import '../models/shop_product.dart';
 import '../services/api/supabase_service.dart';
@@ -10,12 +11,14 @@ class ShopProvider extends ChangeNotifier {
   List<ShopProduct> _products = [];
   List<String> _favoriteIds = [];
   bool _isLoading = false;
+  bool _isOffline = false;
   String _searchQuery = '';
   String _selectedCategory = 'All';
   String _sortMode = 'Popularity'; // Popularity, Rating, Price: Low to High, Price: High to Low
 
   // Getters
   bool get isLoading => _isLoading;
+  bool get isOffline => _isOffline;
   String get searchQuery => _searchQuery;
   String get selectedCategory => _selectedCategory;
   String get sortMode => _sortMode;
@@ -68,6 +71,9 @@ class ShopProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      _isOffline = connectivityResult.contains(ConnectivityResult.none);
+
       // Load favorites from SQLite
       _favoriteIds = await DatabaseService.getFavoriteProductIds();
 
@@ -75,7 +81,7 @@ class ShopProvider extends ChangeNotifier {
       _products = await SupabaseService().fetchShopProducts();
     } catch (e) {
       debugPrint("🚨 Error in ShopProvider initialization: $e");
-      // Fallback
+      _isOffline = true;
       _products = ShopProduct.defaultProducts;
     } finally {
       _isLoading = false;

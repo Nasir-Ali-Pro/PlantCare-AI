@@ -375,6 +375,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
       child: Column(
         children: [
+          if (provider.isOffline) _buildOfflineBanner(provider),
           // Search & Sort row
           Row(
             children: [
@@ -470,6 +471,52 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner(ShopProvider provider) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade900.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.shade700.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade700.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.wifi_off_rounded, color: Colors.amber, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  "Offline Catalog Mode",
+                  style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  "Connect to Wi-Fi to refresh product prices & live deals.",
+                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => provider.loadProducts(),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.amber),
+            tooltip: 'Retry Connection',
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/app_colors.dart';
 import '../providers/garden_provider.dart';
 import '../services/image_service.dart';
+import '../services/notification_service.dart';
 import '../core/utils/error_utils.dart';
 import 'app_card.dart';
 
@@ -336,6 +337,12 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
 
                           setState(() => _isSaving = true);
                           try {
+                            // Ensure notification permission is requested for Android 13+ / iOS care reminders
+                            final notificationGranted = await NotificationService().requestPermissions();
+                            if (!notificationGranted && context.mounted) {
+                              debugPrint("⚠️ Notification permission not granted — plant will be saved, but OS reminders may be silent.");
+                            }
+
                             String finalImagePath = '';
                             if (_pickedImageFile != null) {
                               if (!kIsWeb) {

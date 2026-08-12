@@ -10,7 +10,6 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/garden_provider.dart';
 import '../../models/forum_post.dart';
 import '../../services/api/supabase_service.dart';
-import '../../services/database_service.dart';
 import '../../services/image_service.dart';
 import '../../core/utils/error_utils.dart';
 
@@ -119,6 +118,7 @@ class _ForumScreenState extends State<ForumScreen> {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _hasMorePosts = true;
+  bool _isOffline = false;
   int _currentPage = 0;
   static const int _pageSize = 10;
   List<ForumPost> _posts = [];
@@ -165,31 +165,86 @@ class _ForumScreenState extends State<ForumScreen> {
       _hasMorePosts = true;
     });
 
-    // 1. Instant local load from SQLite so offline or re-opened app shows cached posts & replies immediately
-    final localPosts = await DatabaseService.getForumPosts();
-    if (localPosts.isNotEmpty && mounted) {
-      setState(() {
-        _posts = localPosts;
-        _isLoading = false;
-      });
-    }
-
-    // 2. Fetch fresh posts from Supabase in background
     final freshPosts = await SupabaseService().fetchForumPostsPaginated(
       page: 0,
       pageSize: _pageSize,
     );
+
     if (mounted) {
       setState(() {
         if (freshPosts.isNotEmpty) {
           _posts = freshPosts;
-        } else if (_posts.isEmpty) {
-          _posts = localPosts.isNotEmpty ? localPosts : ForumPost.defaultPosts;
+          _isOffline = false;
+        } else {
+          _isOffline = true;
         }
         _isLoading = false;
         _hasMorePosts = _posts.length >= _pageSize;
       });
     }
+  }
+
+  Widget _buildOfflineBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFD97706).withValues(alpha: 0.15),
+            const Color(0xFFB45309).withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.wifi_off_rounded, color: Color(0xFFF59E0B), size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  "You're Currently Offline",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  "Connect to Wi-Fi or cellular network to load live discussions.",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _loadPosts,
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFFF59E0B)),
+            tooltip: 'Retry Connection',
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadMorePosts() async {
@@ -1894,6 +1949,8 @@ class _ForumScreenState extends State<ForumScreen> {
                   ],
                 ),
               ),
+
+              if (_isOffline) _buildOfflineBanner(),
 
               // ── Forum Posts List ──────────────────────────────────────────────
               Expanded(
