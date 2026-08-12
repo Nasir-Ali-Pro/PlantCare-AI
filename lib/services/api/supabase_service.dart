@@ -44,16 +44,6 @@ class SupabaseService {
         _isInitialized = true;
         debugPrint("⚡ Supabase Service initialized successfully!");
         
-        // Transparent anonymous sign-in to support authenticated storage upload RLS policies
-        try {
-          if (client.auth.currentSession == null) {
-            await client.auth.signInAnonymously();
-            debugPrint("👤 Authenticated anonymously in Supabase successfully!");
-          }
-        } catch (authError) {
-          debugPrint("⚠️ Supabase anonymous authentication skipped/failed: $authError");
-        }
-
         // Auto-seed the database if it is empty to ensure maximum user-experience & premium completeness!
         await seedDatabaseIfEmpty();
       }

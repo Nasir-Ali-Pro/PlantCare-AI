@@ -498,11 +498,10 @@ class GardenProvider extends ChangeNotifier {
     await prefs.remove('pref_last_care_date');
     await prefs.remove('pref_scan_count');
 
-    // Supabase SignOut and re-signin anonymously to preserve anon role
+    // Supabase SignOut
     if (SupabaseService().isConfigured) {
       try {
         await SupabaseService().client.auth.signOut();
-        await SupabaseService().client.auth.signInAnonymously();
       } catch (authError) {
         debugPrint("⚠️ Supabase signOut error: $authError");
       }
