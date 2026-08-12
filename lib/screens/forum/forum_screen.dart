@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/garden_provider.dart';
@@ -1480,24 +1479,16 @@ class _ForumScreenState extends State<ForumScreen> {
                               _showAuthBarrierDialog(context, 'upvote comments');
                               return;
                             }
-                            final prefs = await SharedPreferences.getInstance();
-                            List<String> upvotedCommentIds = prefs.getStringList('pref_upvoted_comment_ids') ?? [];
+                            final result = await SupabaseService().toggleCommentUpvote(
+                              comment.id,
+                              comment.isUpvoted,
+                              comment.upvotes,
+                            );
                             setModalState(() {
-                              if (comment.isUpvoted) {
-                                comment.upvotes = (comment.upvotes - 1).clamp(0, 99999);
-                                comment.isUpvoted = false;
-                                upvotedCommentIds.remove(comment.id);
-                              } else {
-                                comment.upvotes++;
-                                comment.isUpvoted = true;
-                                if (!upvotedCommentIds.contains(comment.id)) {
-                                  upvotedCommentIds.add(comment.id);
-                                }
-                              }
+                              comment.isUpvoted = result['isUpvoted'] as bool;
+                              comment.upvotes = result['upvotes'] as int;
                             });
                             setState(() {});
-                            await prefs.setStringList('pref_upvoted_comment_ids', upvotedCommentIds);
-                            await SupabaseService().updateForumCommentUpvotes(comment.id, comment.upvotes);
                           },
                           child: Row(
                             children: [
@@ -2152,7 +2143,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                         padding: const EdgeInsets.only(right: 10.0),
                                         child: Text(
                                           tag,
-                                          style: const TextStyle(color: AppTheme.primaryGreen, fontSize: 12, fontWeight: FontWeight.bold),
+                                                  style: const TextStyle(color: AppTheme.primaryGreen, fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                       );
                                     }).toList(),
@@ -2171,23 +2162,15 @@ class _ForumScreenState extends State<ForumScreen> {
                                             _showAuthBarrierDialog(context, 'upvote community posts');
                                             return;
                                           }
-                                          final prefs = await SharedPreferences.getInstance();
-                                          List<String> upvotedPostIds = prefs.getStringList('pref_upvoted_post_ids') ?? [];
+                                          final result = await SupabaseService().togglePostUpvote(
+                                            post.id,
+                                            post.isUpvoted,
+                                            post.upvotes,
+                                          );
                                           setState(() {
-                                            if (post.isUpvoted) {
-                                              post.upvotes = (post.upvotes - 1).clamp(0, 99999);
-                                              post.isUpvoted = false;
-                                              upvotedPostIds.remove(post.id);
-                                            } else {
-                                              post.upvotes++;
-                                              post.isUpvoted = true;
-                                              if (!upvotedPostIds.contains(post.id)) {
-                                                upvotedPostIds.add(post.id);
-                                              }
-                                            }
+                                            post.isUpvoted = result['isUpvoted'] as bool;
+                                            post.upvotes = result['upvotes'] as int;
                                           });
-                                          await prefs.setStringList('pref_upvoted_post_ids', upvotedPostIds);
-                                          await SupabaseService().updateForumPostUpvotes(post.id, post.upvotes);
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

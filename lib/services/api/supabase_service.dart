@@ -271,10 +271,9 @@ class SupabaseService {
         ));
       }
 
-      // Read persisted upvoted IDs from SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final upvotedPostIds = (prefs.getStringList('pref_upvoted_post_ids') ?? []).toSet();
-      final upvotedCommentIds = (prefs.getStringList('pref_upvoted_comment_ids') ?? []).toSet();
+      // Fetch user's upvoted posts and comments directly from Supabase cloud database
+      final upvotedPostIds = await fetchUserUpvotedPostIds();
+      final upvotedCommentIds = await fetchUserUpvotedCommentIds();
 
       for (var post in posts) {
         post.isUpvoted = upvotedPostIds.contains(post.id);
@@ -286,6 +285,144 @@ class SupabaseService {
       debugPrint("⚠️ Failed to fetch forum posts from Supabase: $e");
       return [];
     }
+  }
+
+  /// Fetches the set of post IDs upvoted by the currently logged-in user from Supabase.
+  Future<Set<String>> fetchUserUpvotedPostIds() async {
+    if (!_isInitialized) return {};
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return {};
+
+    try {
+      final response = await client
+          .from('forum_post_likes')
+          .select('post_id')
+          .eq('user_id', userId);
+      final Set<String> ids = (response as List).map<String>((row) => row['post_id'] as String).toSet();
+      return ids;
+    } catch (e) {
+      debugPrint("⚠️ Could not fetch user upvoted post IDs from Supabase table: $e");
+      final prefs = await SharedPreferences.getInstance();
+      return (prefs.getStringList('pref_upvoted_post_ids') ?? []).toSet();
+    }
+  }
+
+  /// Fetches the set of comment IDs upvoted by the currently logged-in user from Supabase.
+  Future<Set<String>> fetchUserUpvotedCommentIds() async {
+    if (!_isInitialized) return {};
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return {};
+
+    try {
+      final response = await client
+          .from('forum_comment_likes')
+          .select('comment_id')
+          .eq('user_id', userId);
+      final Set<String> ids = (response as List).map<String>((row) => row['comment_id'] as String).toSet();
+      return ids;
+    } catch (e) {
+      debugPrint("⚠️ Could not fetch user upvoted comment IDs from Supabase table: $e");
+      final prefs = await SharedPreferences.getInstance();
+      return (prefs.getStringList('pref_upvoted_comment_ids') ?? []).toSet();
+    }
+  }
+
+  /// Toggles post upvote in Supabase database. Ensures one-like-per-user enforcement.
+  Future<Map<String, dynamic>> togglePostUpvote(String postId, bool currentIsUpvoted, int currentUpvotes) async {
+    final bool newIsUpvoted = !currentIsUpvoted;
+    final int newUpvotes = newIsUpvoted ? currentUpvotes + 1 : (currentUpvotes - 1).clamp(0, 99999);
+
+    if (!_isInitialized) {
+      return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
+    }
+
+    final userId = client.auth.currentUser?.id;
+
+    try {
+      if (userId != null) {
+        if (newIsUpvoted) {
+          await client.from('forum_post_likes').upsert({
+            'user_id': userId,
+            'post_id': postId,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          }, onConflict: 'user_id,post_id');
+        } else {
+          await client
+              .from('forum_post_likes')
+              .delete()
+              .eq('user_id', userId)
+              .eq('post_id', postId);
+        }
+      }
+
+      await client.from('forum_posts').update({'upvotes': newUpvotes}).eq('id', postId);
+
+      // Local prefs cache update for smooth UI
+      final prefs = await SharedPreferences.getInstance();
+      List<String> upvotedPostIds = prefs.getStringList('pref_upvoted_post_ids') ?? [];
+      if (newIsUpvoted) {
+        if (!upvotedPostIds.contains(postId)) upvotedPostIds.add(postId);
+      } else {
+        upvotedPostIds.remove(postId);
+      }
+      await prefs.setStringList('pref_upvoted_post_ids', upvotedPostIds);
+
+      debugPrint("👍 Post $postId upvote toggled in Supabase cloud: isUpvoted=$newIsUpvoted, upvotes=$newUpvotes");
+    } catch (e) {
+      debugPrint("⚠️ Error toggling post upvote in Supabase cloud: $e");
+      await updateForumPostUpvotes(postId, newUpvotes);
+    }
+
+    return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
+  }
+
+  /// Toggles comment upvote in Supabase database. Ensures one-like-per-user enforcement.
+  Future<Map<String, dynamic>> toggleCommentUpvote(String commentId, bool currentIsUpvoted, int currentUpvotes) async {
+    final bool newIsUpvoted = !currentIsUpvoted;
+    final int newUpvotes = newIsUpvoted ? currentUpvotes + 1 : (currentUpvotes - 1).clamp(0, 99999);
+
+    if (!_isInitialized) {
+      return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
+    }
+
+    final userId = client.auth.currentUser?.id;
+
+    try {
+      if (userId != null) {
+        if (newIsUpvoted) {
+          await client.from('forum_comment_likes').upsert({
+            'user_id': userId,
+            'comment_id': commentId,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          }, onConflict: 'user_id,comment_id');
+        } else {
+          await client
+              .from('forum_comment_likes')
+              .delete()
+              .eq('user_id', userId)
+              .eq('comment_id', commentId);
+        }
+      }
+
+      await client.from('forum_comments').update({'upvotes': newUpvotes}).eq('id', commentId);
+
+      // Local prefs cache update for smooth UI
+      final prefs = await SharedPreferences.getInstance();
+      List<String> upvotedCommentIds = prefs.getStringList('pref_upvoted_comment_ids') ?? [];
+      if (newIsUpvoted) {
+        if (!upvotedCommentIds.contains(commentId)) upvotedCommentIds.add(commentId);
+      } else {
+        upvotedCommentIds.remove(commentId);
+      }
+      await prefs.setStringList('pref_upvoted_comment_ids', upvotedCommentIds);
+
+      debugPrint("💖 Comment $commentId upvote toggled in Supabase cloud: isUpvoted=$newIsUpvoted, upvotes=$newUpvotes");
+    } catch (e) {
+      debugPrint("⚠️ Error toggling comment upvote in Supabase cloud: $e");
+      await updateForumCommentUpvotes(commentId, newUpvotes);
+    }
+
+    return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
   }
 
   static void _applyCommentUpvoteState(List<ForumComment> comments, Set<String> upvotedCommentIds) {
