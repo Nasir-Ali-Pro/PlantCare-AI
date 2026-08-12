@@ -219,6 +219,34 @@ class ImageService {
       rethrow;
     }
   }
+
+  /// Deletes a file from Supabase storage using its full public URL.
+  static Future<void> deleteStorageFileByUrl(String imageUrl) async {
+    if (imageUrl.isEmpty || !imageUrl.contains('/storage/v1/object/public/')) return;
+    try {
+      final supabase = Supabase.instance.client;
+      final uri = Uri.parse(imageUrl);
+      final pathSegments = uri.pathSegments;
+
+      final publicIndex = pathSegments.indexOf('public');
+      if (publicIndex != -1 && publicIndex + 2 < pathSegments.length) {
+        final bucketName = pathSegments[publicIndex + 1];
+        final filePath = pathSegments.sublist(publicIndex + 2).join('/');
+
+        await supabase.storage.from(bucketName).remove([filePath]);
+        debugPrint("🗑️ Removed image from Supabase Storage ($bucketName): $filePath");
+      }
+    } catch (e) {
+      debugPrint("⚠️ Failed to delete storage file by URL ($imageUrl): $e");
+    }
+  }
+
+  /// Deletes multiple files from Supabase storage given a list of public URLs.
+  static Future<void> deleteStorageFilesByUrls(List<String> imageUrls) async {
+    for (final url in imageUrls) {
+      await deleteStorageFileByUrl(url);
+    }
+  }
 }
 
 class UploadedImageInfo {

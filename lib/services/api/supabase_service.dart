@@ -9,6 +9,7 @@ import '../../models/diagnosis_report.dart';
 import '../../models/forum_post.dart';
 import '../../models/shop_product.dart';
 import '../database_service.dart';
+import '../image_service.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -502,14 +503,73 @@ class SupabaseService {
 
   // ── Owner / Admin Content Management ────────────────────────────────────
 
-  /// Permanently deletes a forum post. Comments are cascade-deleted by the DB.
+  /// Permanently deletes a forum post and any associated images from Supabase Storage.
   Future<void> deleteForumPost(String postId) async {
     if (!_isInitialized) return;
     try {
+      // First fetch post to retrieve attached image paths
+      final response = await client
+          .from('forum_posts')
+          .select('attached_image_paths')
+          .eq('id', postId)
+          .maybeSingle();
+
+      if (response != null && response['attached_image_paths'] != null) {
+        final List<String> images = List<String>.from(response['attached_image_paths']);
+        if (images.isNotEmpty) {
+          await ImageService.deleteStorageFilesByUrls(images);
+        }
+      }
+
       await client.from('forum_posts').delete().eq('id', postId);
-      debugPrint('🗑️ Forum post $postId deleted.');
+      debugPrint('🗑️ Forum post $postId deleted along with its storage images.');
     } catch (e) {
       debugPrint('⚠️ Failed to delete forum post: $e');
+    }
+  }
+
+  /// Deletes a user profile and all associated user images (avatar & post images) from Supabase Storage.
+  Future<void> deleteUserProfile(String userId) async {
+    if (!_isInitialized) return;
+    try {
+      // 1. Fetch user profile to check avatar URL
+      final profile = await client
+          .from('user_profiles')
+          .select('avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (profile != null && profile['avatar_url'] != null) {
+        final avatarUrl = profile['avatar_url'] as String;
+        if (avatarUrl.isNotEmpty) {
+          await ImageService.deleteStorageFileByUrl(avatarUrl);
+        }
+      }
+
+      // 2. Fetch all user posts to delete post images from storage
+      final userPosts = await client
+          .from('forum_posts')
+          .select('id, attached_image_paths')
+          .eq('user_id', userId);
+
+      for (var post in userPosts) {
+        if (post['attached_image_paths'] != null) {
+          final List<String> images = List<String>.from(post['attached_image_paths']);
+          if (images.isNotEmpty) {
+            await ImageService.deleteStorageFilesByUrls(images);
+          }
+        }
+      }
+
+      // 3. Delete user posts (comments cascade via DB foreign key)
+      await client.from('forum_posts').delete().eq('user_id', userId);
+
+      // 4. Delete user profile row
+      await client.from('user_profiles').delete().eq('id', userId);
+
+      debugPrint("🗑️ User profile $userId and associated storage images deleted.");
+    } catch (e) {
+      debugPrint("⚠️ Failed to delete user profile and images: $e");
     }
   }
 
