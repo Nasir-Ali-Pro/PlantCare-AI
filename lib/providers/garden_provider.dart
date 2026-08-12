@@ -430,6 +430,9 @@ class GardenProvider extends ChangeNotifier {
       _joinedAt = DateTime.now();
     }
 
+    // Reload garden plants preserved in local SQLite database
+    _plants = await DatabaseService.getPlants();
+
     await syncProfileToSupabase();
     notifyListeners();
   }
@@ -447,6 +450,9 @@ class GardenProvider extends ChangeNotifier {
     await prefs.setString('pref_username', 'Guest Gardener');
     await prefs.setString('pref_role', 'user');
     await prefs.remove('pref_avatar_url');
+
+    // Reload garden plants preserved in local SQLite database
+    _plants = await DatabaseService.getPlants();
 
     // Supabase Auth Anonymous session + Guest Profile Sync
     if (SupabaseService().isConfigured) {
@@ -482,12 +488,6 @@ class GardenProvider extends ChangeNotifier {
     await prefs.setString('pref_username', 'Green Gardener');
     await prefs.setString('pref_role', 'user');
     await prefs.remove('pref_avatar_url');
-    
-    // Reset plants on logout
-    _plants.clear();
-
-    // Clear local database
-    await DatabaseService.clearPlants();
     
     // Clear gamification stats so they don't leak to the next account
     _careStreak = 0;
