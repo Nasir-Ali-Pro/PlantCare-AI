@@ -554,9 +554,13 @@ class GardenProvider extends ChangeNotifier {
     // Save plant in SharedPreferences database
     await DatabaseService.savePlant(plant);
 
-    // Schedule reminders
-    await NotificationService().scheduleWateringReminder(plant.id, plant.nickname, plant.wateringFrequencyDays);
-    await NotificationService().scheduleFertilizingReminder(plant.id, plant.nickname, plant.fertilizingFrequencyDays);
+    // Schedule reminders safely
+    try {
+      await NotificationService().scheduleWateringReminder(plant.id, plant.nickname, plant.wateringFrequencyDays);
+      await NotificationService().scheduleFertilizingReminder(plant.id, plant.nickname, plant.fertilizingFrequencyDays);
+    } catch (notifErr) {
+      debugPrint("⚠️ Could not schedule notifications for plant: $notifErr");
+    }
 
     _plants.insert(0, plant);
     notifyListeners();

@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../../core/theme/app_theme.dart';
 import '../../providers/garden_provider.dart';
 import '../../models/forum_post.dart';
@@ -1475,22 +1475,29 @@ class _ForumScreenState extends State<ForumScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             if (isGuest) {
                               _showAuthBarrierDialog(context, 'upvote comments');
                               return;
                             }
+                            final prefs = await SharedPreferences.getInstance();
+                            List<String> upvotedCommentIds = prefs.getStringList('pref_upvoted_comment_ids') ?? [];
                             setModalState(() {
                               if (comment.isUpvoted) {
-                                comment.upvotes--;
+                                comment.upvotes = (comment.upvotes - 1).clamp(0, 99999);
                                 comment.isUpvoted = false;
+                                upvotedCommentIds.remove(comment.id);
                               } else {
                                 comment.upvotes++;
                                 comment.isUpvoted = true;
+                                if (!upvotedCommentIds.contains(comment.id)) {
+                                  upvotedCommentIds.add(comment.id);
+                                }
                               }
                             });
                             setState(() {});
-                            SupabaseService().updateForumCommentUpvotes(comment.id, comment.upvotes);
+                            await prefs.setStringList('pref_upvoted_comment_ids', upvotedCommentIds);
+                            await SupabaseService().updateForumCommentUpvotes(comment.id, comment.upvotes);
                           },
                           child: Row(
                             children: [
@@ -2158,22 +2165,29 @@ class _ForumScreenState extends State<ForumScreen> {
                                     children: [
                                       // Upvote Button
                                       GestureDetector(
-                                        onTap: () {
+                                        onTap: () async {
                                           final isGuest = Provider.of<GardenProvider>(context, listen: false).isGuest;
                                           if (isGuest) {
                                             _showAuthBarrierDialog(context, 'upvote community posts');
                                             return;
                                           }
+                                          final prefs = await SharedPreferences.getInstance();
+                                          List<String> upvotedPostIds = prefs.getStringList('pref_upvoted_post_ids') ?? [];
                                           setState(() {
                                             if (post.isUpvoted) {
-                                              post.upvotes--;
+                                              post.upvotes = (post.upvotes - 1).clamp(0, 99999);
                                               post.isUpvoted = false;
+                                              upvotedPostIds.remove(post.id);
                                             } else {
                                               post.upvotes++;
                                               post.isUpvoted = true;
+                                              if (!upvotedPostIds.contains(post.id)) {
+                                                upvotedPostIds.add(post.id);
+                                              }
                                             }
                                           });
-                                          SupabaseService().updateForumPostUpvotes(post.id, post.upvotes);
+                                          await prefs.setStringList('pref_upvoted_post_ids', upvotedPostIds);
+                                          await SupabaseService().updateForumPostUpvotes(post.id, post.upvotes);
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

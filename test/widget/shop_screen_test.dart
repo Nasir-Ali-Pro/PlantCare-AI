@@ -73,7 +73,7 @@ void main() {
       await provider.loadProducts();
 
       await tester.pumpWidget(createShopScreen(provider));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Check AppBar Title
       expect(find.text('Affiliate Shop 🛒'), findsOneWidget);
@@ -95,7 +95,7 @@ void main() {
       await provider.loadProducts();
 
       await tester.pumpWidget(createShopScreen(provider));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       final searchField = find.byType(TextField);
       await tester.enterText(searchField, 'Neem');
@@ -109,7 +109,7 @@ void main() {
       await provider.loadProducts();
 
       await tester.pumpWidget(createShopScreen(provider));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Tap Wishlist Tab
       final wishlistTab = find.text('Wishlist');

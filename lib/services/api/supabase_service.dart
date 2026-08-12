@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_constants.dart';
 import '../../models/diagnosis_report.dart';
 import '../../models/forum_post.dart';
@@ -269,23 +270,38 @@ class SupabaseService {
         ));
       }
 
-      // Cache posts to local SQLite for offline access
-      await DatabaseService.saveForumPosts(posts);
+      // Read persisted upvoted IDs from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final upvotedPostIds = (prefs.getStringList('pref_upvoted_post_ids') ?? []).toSet();
+      final upvotedCommentIds = (prefs.getStringList('pref_upvoted_comment_ids') ?? []).toSet();
+
+      for (var post in posts) {
+        post.isUpvoted = upvotedPostIds.contains(post.id);
+        _applyCommentUpvoteState(post.comments, upvotedCommentIds);
+      }
 
       return posts;
     } catch (e) {
-      debugPrint("⚠️ Failed to fetch forum posts from Supabase: $e — returning local cache.");
-      return await DatabaseService.getForumPosts();
+      debugPrint("⚠️ Failed to fetch forum posts from Supabase: $e");
+      return [];
     }
   }
 
-  /// Create a new forum post in Supabase and local SQLite
+  static void _applyCommentUpvoteState(List<ForumComment> comments, Set<String> upvotedCommentIds) {
+    for (var c in comments) {
+      c.isUpvoted = upvotedCommentIds.contains(c.id);
+      if (c.replies.isNotEmpty) {
+        _applyCommentUpvoteState(c.replies, upvotedCommentIds);
+      }
+    }
+  }
+
+  /// Create a new forum post directly in Supabase
   Future<void> createForumPost(ForumPost post) async {
-    // Always persist locally first so content is never lost
-    await DatabaseService.saveForumPost(post);
     if (!_isInitialized) return;
     try {
-      await client.from('forum_posts').insert({
+      final userId = client.auth.currentUser?.id;
+      final Map<String, dynamic> data = {
         'id': post.id,
         'author_name': post.authorName,
         'author_title': post.authorTitle,
@@ -299,25 +315,28 @@ class SupabaseService {
         'attached_image_paths': post.attachedImagePaths,
         'diagnosis_name': post.diagnosisName,
         'created_at': post.dateTime.toUtc().toIso8601String(),
-      });
-      debugPrint("💬 Forum post ${post.id} synced to Supabase.");
+      };
+      if (userId != null) {
+        data['user_id'] = userId;
+      }
+      await client.from('forum_posts').insert(data);
+      debugPrint("💬 Forum post ${post.id} synced directly to Supabase.");
     } catch (e) {
       debugPrint("⚠️ Failed to create forum post in Supabase: $e");
+      rethrow;
     }
   }
 
-  /// Create a new forum comment/reply in Supabase and local SQLite
+  /// Create a new forum comment/reply directly in Supabase
   Future<void> createForumComment(String postId, String? parentCommentId, ForumComment comment) async {
     final cleanParentId = (parentCommentId != null && parentCommentId.trim().isNotEmpty)
         ? parentCommentId.trim()
         : null;
 
-    // Always persist locally first so reply is immediately stored in SQLite
-    await DatabaseService.saveForumComment(postId, cleanParentId, comment);
-
     if (!_isInitialized) return;
     try {
-      await client.from('forum_comments').insert({
+      final userId = client.auth.currentUser?.id;
+      final Map<String, dynamic> data = {
         'id': comment.id,
         'post_id': postId,
         'parent_comment_id': cleanParentId,
@@ -328,10 +347,15 @@ class SupabaseService {
         'content': comment.content,
         'upvotes': comment.upvotes,
         'created_at': comment.dateTime.toUtc().toIso8601String(),
-      });
-      debugPrint("💬 Forum comment/reply ${comment.id} (parentId: $cleanParentId) synced to Supabase.");
+      };
+      if (userId != null) {
+        data['user_id'] = userId;
+      }
+      await client.from('forum_comments').insert(data);
+      debugPrint("💬 Forum comment/reply ${comment.id} (parentId: $cleanParentId) synced directly to Supabase.");
     } catch (e) {
       debugPrint("⚠️ Failed to create forum comment in Supabase: $e");
+      rethrow;
     }
   }
 
