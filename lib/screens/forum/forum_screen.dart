@@ -1292,11 +1292,11 @@ class _ForumScreenState extends State<ForumScreen> {
                             dateTime: DateTime.now(),
                           );
 
+                          await SupabaseService().createForumPost(newPost);
+
                           setState(() {
                             _posts.insert(0, newPost);
                           });
-
-                          await SupabaseService().createForumPost(newPost);
 
                           if (context.mounted) {
                             Navigator.pop(context);
@@ -1813,18 +1813,28 @@ class _ForumScreenState extends State<ForumScreen> {
                                   );
                                   final parentId = replyingToComment?.id;
 
-                                  setModalState(() {
-                                    if (replyingToComment != null) {
-                                      _addReplyRecursive(post.comments, replyingToComment!.id, newCommentObj);
-                                      replyingToComment = null;
-                                    } else {
-                                      post.comments.add(newCommentObj);
+                                  try {
+                                    await SupabaseService().createForumComment(post.id, parentId, newCommentObj);
+                                    setModalState(() {
+                                      if (replyingToComment != null) {
+                                        _addReplyRecursive(post.comments, replyingToComment!.id, newCommentObj);
+                                        replyingToComment = null;
+                                      } else {
+                                        post.comments.add(newCommentObj);
+                                      }
+                                    });
+                                    setState(() {});
+                                    commentController.clear();
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to post comment')),
+                                          backgroundColor: AppTheme.dangerRed,
+                                        ),
+                                      );
                                     }
-                                  });
-
-                                  setState(() {});
-                                  commentController.clear();
-                                  await SupabaseService().createForumComment(post.id, parentId, newCommentObj);
+                                  }
                                 },
                               ),
                             ),

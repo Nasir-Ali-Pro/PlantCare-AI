@@ -279,41 +279,49 @@ class SupabaseService {
 
   /// Fetches the set of post IDs upvoted by the currently logged-in user from Supabase.
   Future<Set<String>> fetchUserUpvotedPostIds() async {
-    if (!_isInitialized) return {};
+    final prefs = await SharedPreferences.getInstance();
+    final localIds = (prefs.getStringList('pref_upvoted_post_ids') ?? []).toSet();
+
+    if (!_isInitialized) return localIds;
     final userId = client.auth.currentUser?.id;
-    if (userId == null) return {};
+    if (userId == null) return localIds;
 
     try {
       final response = await client
           .from('forum_post_likes')
           .select('post_id')
           .eq('user_id', userId);
-      final Set<String> ids = (response as List).map<String>((row) => row['post_id'] as String).toSet();
-      return ids;
+      final Set<String> cloudIds = (response as List).map<String>((row) => row['post_id'] as String).toSet();
+      final combined = cloudIds.union(localIds);
+      await prefs.setStringList('pref_upvoted_post_ids', combined.toList());
+      return combined;
     } catch (e) {
       debugPrint("⚠️ Could not fetch user upvoted post IDs from Supabase table: $e");
-      final prefs = await SharedPreferences.getInstance();
-      return (prefs.getStringList('pref_upvoted_post_ids') ?? []).toSet();
+      return localIds;
     }
   }
 
   /// Fetches the set of comment IDs upvoted by the currently logged-in user from Supabase.
   Future<Set<String>> fetchUserUpvotedCommentIds() async {
-    if (!_isInitialized) return {};
+    final prefs = await SharedPreferences.getInstance();
+    final localIds = (prefs.getStringList('pref_upvoted_comment_ids') ?? []).toSet();
+
+    if (!_isInitialized) return localIds;
     final userId = client.auth.currentUser?.id;
-    if (userId == null) return {};
+    if (userId == null) return localIds;
 
     try {
       final response = await client
           .from('forum_comment_likes')
           .select('comment_id')
           .eq('user_id', userId);
-      final Set<String> ids = (response as List).map<String>((row) => row['comment_id'] as String).toSet();
-      return ids;
+      final Set<String> cloudIds = (response as List).map<String>((row) => row['comment_id'] as String).toSet();
+      final combined = cloudIds.union(localIds);
+      await prefs.setStringList('pref_upvoted_comment_ids', combined.toList());
+      return combined;
     } catch (e) {
       debugPrint("⚠️ Could not fetch user upvoted comment IDs from Supabase table: $e");
-      final prefs = await SharedPreferences.getInstance();
-      return (prefs.getStringList('pref_upvoted_comment_ids') ?? []).toSet();
+      return localIds;
     }
   }
 
@@ -565,6 +573,15 @@ class SupabaseService {
           diagnosisName: p['diagnosis_name'],
           dateTime: DateTime.tryParse(p['created_at'] ?? '') ?? DateTime.now(),
         ));
+      }
+
+      // Fetch user's upvoted posts and comments directly from Supabase cloud database
+      final upvotedPostIds = await fetchUserUpvotedPostIds();
+      final upvotedCommentIds = await fetchUserUpvotedCommentIds();
+
+      for (var post in posts) {
+        post.isUpvoted = upvotedPostIds.contains(post.id);
+        _applyCommentUpvoteState(post.comments, upvotedCommentIds);
       }
 
       // Cache paginated posts to SQLite
