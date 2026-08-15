@@ -81,19 +81,27 @@ class AppErrorUtils {
         errStr.contains('already in use')) {
       return "✉️ An account with this email address already exists. Please sign in instead.";
     }
+    if (errStr.contains('row-level security') || errStr.contains('42501')) {
+      return "🔒 Session expired or restricted. Please sign out and sign back in.";
+    }
+    if (errStr.contains('foreign key') || errStr.contains('23503')) {
+      return "⚠️ The requested post or comment was not found on the server.";
+    }
+    if (errStr.contains('not-null constraint') || errStr.contains('23502')) {
+      return "⚠️ Missing required information. Please complete all required fields.";
+    }
 
-    // 8. Custom user-facing Exception messages (if already formatted cleanly without technical stacktraces)
-    if (error is Exception) {
-      final cleanMsg = error.toString().replaceAll(RegExp(r'^Exception:\s*'), '');
-      if (!cleanMsg.contains('SocketException') &&
-          !cleanMsg.contains('ClientException') &&
-          !cleanMsg.contains('HttpException') &&
-          !cleanMsg.contains('AuthException') &&
-          !cleanMsg.contains('http://') &&
-          !cleanMsg.contains('https://') &&
-          cleanMsg.length < 120) {
-        return cleanMsg;
-      }
+    // 8. Extract clean message from custom Exception or object
+    final String fullMsg = error.toString();
+    final String cleanMsg = fullMsg.replaceAll(RegExp(r'^(Exception|PostgrestException|AuthException):\s*'), '').trim();
+    if (!cleanMsg.contains('SocketException') &&
+        !cleanMsg.contains('ClientException') &&
+        !cleanMsg.contains('HttpException') &&
+        !cleanMsg.contains('http://') &&
+        !cleanMsg.contains('https://') &&
+        cleanMsg.length > 5 &&
+        cleanMsg.length < 100) {
+      return cleanMsg;
     }
 
     // 9. Fallback User-Friendly Message

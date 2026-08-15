@@ -455,7 +455,7 @@ class SupabaseService {
       if (userId != null) {
         data['user_id'] = userId;
       }
-      await client.from('forum_posts').insert(data);
+      await client.from('forum_posts').upsert(data, onConflict: 'id');
       debugPrint("💬 Forum post ${post.id} synced directly to Supabase.");
     } catch (e) {
       debugPrint("⚠️ Failed to create forum post in Supabase: $e");
@@ -465,13 +465,64 @@ class SupabaseService {
 
   /// Create a new forum comment/reply directly in Supabase
   Future<void> createForumComment(String postId, String? parentCommentId, ForumComment comment) async {
-    final cleanParentId = (parentCommentId != null && parentCommentId.trim().isNotEmpty)
-        ? parentCommentId.trim()
-        : null;
-
     if (!_isInitialized) return;
     try {
       final userId = client.auth.currentUser?.id;
+
+      // 1. If commenting on a default curated post (e.g. 'def_post_1'), ensure the post is synced to Supabase first
+      if (postId.startsWith('def_')) {
+        try {
+          final defPost = ForumPost.defaultPosts.firstWhere((p) => p.id == postId);
+          await createForumPost(defPost);
+        } catch (postSyncErr) {
+          debugPrint("⚠️ Could not pre-sync default post $postId: $postSyncErr");
+        }
+      }
+
+      // 2. Clean parentCommentId. If replying to a default comment (e.g. 'def_comm_1'), pre-sync parent comment
+      String? cleanParentId = (parentCommentId != null && parentCommentId.trim().isNotEmpty)
+          ? parentCommentId.trim()
+          : null;
+
+      if (cleanParentId != null && cleanParentId.startsWith('def_')) {
+        try {
+          ForumComment? targetDefComm;
+          for (var p in ForumPost.defaultPosts) {
+            for (var c in p.comments) {
+              if (c.id == cleanParentId) {
+                targetDefComm = c;
+                break;
+              }
+              for (var r in c.replies) {
+                if (r.id == cleanParentId) {
+                  targetDefComm = r;
+                  break;
+                }
+              }
+            }
+          }
+          if (targetDefComm != null) {
+            final Map<String, dynamic> defCommData = {
+              'id': targetDefComm.id,
+              'post_id': postId,
+              'parent_comment_id': null,
+              'author_name': targetDefComm.authorName,
+              'author_title': targetDefComm.authorTitle,
+              'author_avatar': targetDefComm.authorAvatar,
+              'is_verified_expert': targetDefComm.isVerifiedExpert,
+              'content': targetDefComm.content,
+              'upvotes': targetDefComm.upvotes,
+              'created_at': targetDefComm.dateTime.toUtc().toIso8601String(),
+            };
+            if (userId != null) defCommData['user_id'] = userId;
+            await client.from('forum_comments').upsert(defCommData, onConflict: 'id');
+          }
+        } catch (commSyncErr) {
+          debugPrint("⚠️ Could not pre-sync default comment $cleanParentId: $commSyncErr");
+          cleanParentId = null;
+        }
+      }
+
       final Map<String, dynamic> data = {
         'id': comment.id,
         'post_id': postId,
@@ -487,7 +538,7 @@ class SupabaseService {
       if (userId != null) {
         data['user_id'] = userId;
       }
-      await client.from('forum_comments').insert(data);
+      await client.from('forum_comments').upsert(data, onConflict: 'id');
       debugPrint("💬 Forum comment/reply ${comment.id} (parentId: $cleanParentId) synced directly to Supabase.");
     } catch (e) {
       debugPrint("⚠️ Failed to create forum comment in Supabase: $e");
