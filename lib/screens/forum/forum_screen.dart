@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/garden_provider.dart';
 import '../../models/forum_post.dart';
@@ -125,10 +126,17 @@ class _ForumScreenState extends State<ForumScreen> {
   List<ForumPost> _posts = [];
   final ScrollController _scrollController = ScrollController();
 
+  // ── Realtime Community Notifications ───────────────────────
+  RealtimeChannel? _realtimeChannel;
+  final List<Map<String, dynamic>> _notifications = [];
+  int _unreadCount = 0;
+
   @override
   void initState() {
     super.initState();
     _loadPosts();
+    _initRealtimeNotifications();
+
     // Listen for scroll-to-bottom to load more posts
     _scrollController.addListener(() {
       if (_scrollController.hasClients &&
@@ -155,8 +163,198 @@ class _ForumScreenState extends State<ForumScreen> {
 
   @override
   void dispose() {
+    _realtimeChannel?.unsubscribe();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _initRealtimeNotifications() {
+    _realtimeChannel = SupabaseService().subscribeToForumNotifications(
+      onNotification: (notif) {
+        if (!mounted) return;
+        setState(() {
+          _notifications.insert(0, notif);
+          _unreadCount++;
+        });
+
+        // Show floating top toast banner
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFF22C55E), width: 1.5),
+            ),
+            content: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    notif['type'] == 'comment'
+                        ? Icons.chat_bubble_rounded
+                        : Icons.favorite_rounded,
+                    color: const Color(0xFF22C55E),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        notif['title'] ?? 'Community Activity',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        notif['body'] ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showNotificationsSheet() {
+    setState(() {
+      _unreadCount = 0;
+    });
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F172A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.notifications_active_rounded, color: Color(0xFF22C55E)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Live Community Activity',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: _notifications.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.notifications_none_rounded, size: 48, color: Colors.white24),
+                                SizedBox(height: 12),
+                                Text(
+                                  'No activity yet',
+                                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Realtime notifications will appear here when users comment or upvote!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            controller: scrollController,
+                            itemCount: _notifications.length,
+                            separatorBuilder: (ctx, i) => const Divider(color: Colors.white10),
+                            itemBuilder: (ctx, index) {
+                              final item = _notifications[index];
+                              final isComment = item['type'] == 'comment';
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: isComment
+                                      ? const Color(0xFF22C55E).withValues(alpha: 0.2)
+                                      : Colors.redAccent.withValues(alpha: 0.2),
+                                  child: Icon(
+                                    isComment ? Icons.chat_bubble_rounded : Icons.favorite_rounded,
+                                    color: isComment ? const Color(0xFF22C55E) : Colors.redAccent,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  item['title'] ?? '',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                subtitle: Text(
+                                  item['body'] ?? '',
+                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _loadPosts() async {
@@ -1880,9 +2078,46 @@ class _ForumScreenState extends State<ForumScreen> {
       appBar: AppBar(
         title: const Text('Community Forum'),
         actions: [
+          Stack(
+            children: [
+              IconButton(
+                onPressed: _showNotificationsSheet,
+                icon: const Icon(
+                  Icons.notifications_active_rounded,
+                  size: 24,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+              if (_unreadCount > 0)
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$_unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             onPressed: () => _showCreatePostSheet(context),
-            icon: const Icon(Icons.add_comment_rounded, size: 28, color: AppTheme.primaryGreen),
+            icon: const Icon(Icons.add_comment_rounded, size: 26, color: AppTheme.primaryGreen),
           ),
         ],
       ),

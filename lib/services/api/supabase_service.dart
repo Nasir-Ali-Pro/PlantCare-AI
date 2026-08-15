@@ -1050,4 +1050,72 @@ class SupabaseService {
       debugPrint("⚠️ Click analytics logging failed/skipped (table might not exist): $e");
     }
   }
+
+  // ── Supabase Realtime Notifications ────────────────────────
+
+  /// Subscribes to live Postgres changes on forum_comments & forum_post_likes.
+  /// Calls [onNotification] whenever a new comment or upvote occurs.
+  RealtimeChannel? subscribeToForumNotifications({
+    required Function(Map<String, dynamic> notification) onNotification,
+  }) {
+    if (!_isInitialized) return null;
+
+    try {
+      final currentUserId = client.auth.currentUser?.id;
+      final channelName = 'public:forum_activity_${DateTime.now().millisecondsSinceEpoch}';
+      final channel = client.channel(channelName);
+
+      channel.onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'forum_comments',
+        callback: (payload) {
+          final newComment = payload.newRecord;
+          final authorId = newComment['auth_users_id'];
+          // Don't notify user of their own comments
+          if (currentUserId != null && authorId == currentUserId) return;
+
+          onNotification({
+            'id': newComment['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            'type': 'comment',
+            'title': '💬 New Comment on Forum',
+            'body': '${newComment['author_name'] ?? 'Someone'} commented: "${newComment['content'] ?? ''}"',
+            'actor_name': newComment['author_name'] ?? 'Gardener',
+            'post_id': newComment['post_id']?.toString(),
+            'created_at': newComment['created_at'] ?? DateTime.now().toIso8601String(),
+            'is_read': false,
+          });
+        },
+      );
+
+      channel.onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'forum_post_likes',
+        callback: (payload) {
+          final newLike = payload.newRecord;
+          final userId = newLike['user_id'];
+          if (currentUserId != null && userId == currentUserId) return;
+
+          onNotification({
+            'id': newLike['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            'type': 'like',
+            'title': '❤️ Post Upvoted',
+            'body': 'A gardener upvoted a post in the community!',
+            'actor_name': 'Gardener',
+            'post_id': newLike['post_id']?.toString(),
+            'created_at': newLike['created_at'] ?? DateTime.now().toIso8601String(),
+            'is_read': false,
+          });
+        },
+      );
+
+      channel.subscribe();
+      debugPrint("⚡ Realtime notification stream subscribed successfully on channel: $channelName");
+      return channel;
+    } catch (e) {
+      debugPrint("⚠️ Failed to subscribe to Realtime notifications: $e");
+      return null;
+    }
+  }
 }
