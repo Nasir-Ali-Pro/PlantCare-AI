@@ -1068,7 +1068,116 @@ class SupabaseService {
     }
   }
 
-  // ── Supabase Realtime Notifications ────────────────────────
+  // ── Supabase Realtime & Persistent Notifications ────────────────────────
+
+  /// Fetches historical activity notifications for the user (e.g. comments/upvotes on their posts while away)
+  Future<List<Map<String, dynamic>>> fetchUserActivityNotifications({
+    required String currentUsername,
+  }) async {
+    final List<Map<String, dynamic>> notifications = [];
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. Load locally persisted notifications first
+    final String? cachedJson = prefs.getString('pref_saved_notifications');
+    if (cachedJson != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(cachedJson);
+        for (var item in decoded) {
+          notifications.add(Map<String, dynamic>.from(item as Map));
+        }
+      } catch (e) {
+        debugPrint("⚠️ Failed to parse cached notifications: $e");
+      }
+    }
+
+    if (!_isInitialized) return notifications;
+
+    try {
+      final currentUserId = client.auth.currentUser?.id;
+
+      // 2. Fetch posts created by current user
+      final userPosts = await client
+          .from('forum_posts')
+          .select('id, title')
+          .or('author_name.eq.$currentUsername${currentUserId != null ? ",user_id.eq.$currentUserId" : ""}');
+
+      final Map<String, String> userPostTitles = {};
+      for (var p in userPosts) {
+        userPostTitles[p['id'].toString()] = p['title'].toString();
+      }
+
+      if (userPostTitles.isNotEmpty) {
+        final postIds = userPostTitles.keys.toList();
+
+        // Fetch comments on User A's posts by OTHER users
+        final comments = await client
+            .from('forum_comments')
+            .select()
+            .inFilter('post_id', postIds)
+            .neq('author_name', currentUsername)
+            .order('created_at', ascending: false)
+            .limit(20);
+
+        for (var c in comments) {
+          final notifId = 'comm_${c['id']}';
+          if (!notifications.any((n) => n['id'] == notifId)) {
+            final postTitle = userPostTitles[c['post_id'].toString()] ?? 'your post';
+            notifications.add({
+              'id': notifId,
+              'type': 'comment',
+              'title': '💬 New Comment on Your Post',
+              'body': '${c['author_name'] ?? 'A gardener'} commented on "$postTitle": "${c['content'] ?? ''}"',
+              'actor_name': c['author_name'] ?? 'Gardener',
+              'post_id': c['post_id']?.toString(),
+              'created_at': c['created_at'] ?? DateTime.now().toIso8601String(),
+              'is_read': false,
+            });
+          }
+        }
+
+        // Fetch upvotes on User A's posts
+        final likes = await client
+            .from('forum_post_likes')
+            .select()
+            .inFilter('post_id', postIds)
+            .order('created_at', ascending: false)
+            .limit(20);
+
+        for (var l in likes) {
+          final lUserId = l['user_id']?.toString();
+          if (currentUserId != null && lUserId == currentUserId) continue; // Skip self likes
+          final notifId = 'like_${l['id'] ?? "${l['user_id']}_${l['post_id']}"}';
+          if (!notifications.any((n) => n['id'] == notifId)) {
+            final postTitle = userPostTitles[l['post_id'].toString()] ?? 'your post';
+            notifications.add({
+              'id': notifId,
+              'type': 'like',
+              'title': '❤️ Your Post Was Upvoted',
+              'body': 'A gardener upvoted your post "$postTitle"!',
+              'actor_name': 'Gardener',
+              'post_id': l['post_id']?.toString(),
+              'created_at': l['created_at'] ?? DateTime.now().toIso8601String(),
+              'is_read': false,
+            });
+          }
+        }
+      }
+
+      // Sort newest first
+      notifications.sort((a, b) {
+        final dtA = DateTime.tryParse(a['created_at']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dtB = DateTime.tryParse(b['created_at']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dtB.compareTo(dtA);
+      });
+
+      // Save top 50 to SharedPreferences
+      await prefs.setString('pref_saved_notifications', jsonEncode(notifications.take(50).toList()));
+    } catch (e) {
+      debugPrint("⚠️ Activity notifications fetch error: $e");
+    }
+
+    return notifications;
+  }
 
   /// Subscribes to live Postgres changes on forum_comments & forum_post_likes.
   /// Calls [onNotification] whenever a new comment or upvote occurs.

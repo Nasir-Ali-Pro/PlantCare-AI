@@ -168,9 +168,21 @@ class _ForumScreenState extends State<ForumScreen> {
     super.dispose();
   }
 
-  void _initRealtimeNotifications() {
+  void _initRealtimeNotifications() async {
     final gardenProvider = Provider.of<GardenProvider>(context, listen: false);
     final currentUsername = gardenProvider.username;
+
+    // Load historical unread activity notifications for User A when opening the app/screen
+    final pastNotifs = await SupabaseService().fetchUserActivityNotifications(
+      currentUsername: currentUsername,
+    );
+    if (mounted && pastNotifs.isNotEmpty) {
+      setState(() {
+        _notifications.clear();
+        _notifications.addAll(pastNotifs);
+        _unreadCount = _notifications.where((n) => n['is_read'] != true).length;
+      });
+    }
 
     _realtimeChannel = SupabaseService().subscribeToForumNotifications(
       currentUserName: currentUsername,
@@ -337,6 +349,18 @@ class _ForumScreenState extends State<ForumScreen> {
                               final item = _notifications[index];
                               final isComment = item['type'] == 'comment';
                               return ListTile(
+                                onTap: () {
+                                  final targetPostId = item['post_id'];
+                                  Navigator.pop(ctx);
+                                  if (targetPostId != null) {
+                                    try {
+                                      final targetPost = _posts.firstWhere((p) => p.id == targetPostId);
+                                      _showCommentsModal(context, targetPost);
+                                    } catch (_) {
+                                      // Post may be in another page
+                                    }
+                                  }
+                                },
                                 leading: CircleAvatar(
                                   backgroundColor: isComment
                                       ? const Color(0xFF22C55E).withValues(alpha: 0.2)
