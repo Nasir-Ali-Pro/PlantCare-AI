@@ -76,6 +76,30 @@ class NotificationService {
         onDidReceiveNotificationResponse: _onNotificationTap,
         onDidReceiveBackgroundNotificationResponse: _onNotificationTapBackground,
       );
+
+      // Create Android Notification Channels for Android 8.0+ (API 26+)
+      final androidImpl = _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImpl != null) {
+        const wateringChannel = AndroidNotificationChannel(
+          'watering_reminders',
+          'Watering Reminders',
+          description: 'Daily reminders to water your plants',
+          importance: Importance.high,
+          playSound: true,
+        );
+        const fertilizingChannel = AndroidNotificationChannel(
+          'fertilizing_reminders',
+          'Fertilizing Reminders',
+          description: 'Periodic reminders to fertilize your plants',
+          importance: Importance.high,
+          playSound: true,
+        );
+        await androidImpl.createNotificationChannel(wateringChannel);
+        await androidImpl.createNotificationChannel(fertilizingChannel);
+      }
+
       _initialized = true;
       debugPrint('🔔 NotificationService initialized.');
     } catch (e) {
