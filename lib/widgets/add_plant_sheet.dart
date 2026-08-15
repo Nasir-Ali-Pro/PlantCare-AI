@@ -337,6 +337,8 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
 
                           setState(() => _isSaving = true);
                           try {
+                            final parentMessenger = ScaffoldMessenger.of(context);
+
                             // Ensure notification permission is requested for Android 13+ / iOS care reminders
                             final notificationGranted = await NotificationService().requestPermissions();
                             if (!notificationGranted && context.mounted) {
@@ -354,7 +356,6 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
                               }
                             }
 
-                            final parentMessenger = ScaffoldMessenger.of(context);
                             await widget.provider.addPlant(
                               nickname: _nameCtrl.text.trim(),
                               species: _speciesCtrl.text.trim(),
