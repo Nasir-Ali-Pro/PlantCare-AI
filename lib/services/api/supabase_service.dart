@@ -466,25 +466,12 @@ class SupabaseService {
         'diagnosis_name': post.diagnosisName,
         'created_at': post.dateTime.toUtc().toIso8601String(),
       };
-      if (post.authorAvatar != null && post.authorAvatar!.isNotEmpty) {
-        data['author_avatar'] = post.authorAvatar;
-      }
       if (userId != null) {
-        data['user_id'] = userId;
+        data['auth_users_id'] = userId;
       }
 
-      try {
-        await client.from('forum_posts').upsert(data, onConflict: 'id');
-      } catch (upsertErr) {
-        if (upsertErr.toString().contains('PGRST204') || upsertErr.toString().contains('author_avatar')) {
-          data.remove('author_avatar');
-          data.remove('author_avatar_url');
-          await client.from('forum_posts').upsert(data, onConflict: 'id');
-        } else {
-          rethrow;
-        }
-      }
-      debugPrint("💬 Forum post ${post.id} synced directly to Supabase.");
+      await client.from('forum_posts').upsert(data, onConflict: 'id');
+      debugPrint("💬 Forum post ${post.id} synced directly to Supabase cloud.");
     } catch (e) {
       debugPrint("⚠️ Could not sync forum post to Supabase cloud (saved locally): $e");
     }
@@ -494,8 +481,6 @@ class SupabaseService {
   Future<void> createForumComment(String postId, String? parentCommentId, ForumComment comment) async {
     if (!_isInitialized) return;
     try {
-      final userId = client.auth.currentUser?.id;
-
       // 1. If commenting on a default curated post (e.g. 'def_post_1'), ensure the post is synced to Supabase first
       if (postId.startsWith('def_')) {
         try {
@@ -540,16 +525,7 @@ class SupabaseService {
               'upvotes': targetDefComm.upvotes,
               'created_at': targetDefComm.dateTime.toUtc().toIso8601String(),
             };
-            if (targetDefComm.authorAvatar != null && targetDefComm.authorAvatar!.isNotEmpty) {
-              defCommData['author_avatar'] = targetDefComm.authorAvatar;
-            }
-            if (userId != null) defCommData['user_id'] = userId;
-            try {
-              await client.from('forum_comments').upsert(defCommData, onConflict: 'id');
-            } catch (_) {
-              defCommData.remove('author_avatar');
-              await client.from('forum_comments').upsert(defCommData, onConflict: 'id');
-            }
+            await client.from('forum_comments').upsert(defCommData, onConflict: 'id');
           }
         } catch (commSyncErr) {
           debugPrint("⚠️ Could not pre-sync default comment $cleanParentId: $commSyncErr");
@@ -568,24 +544,8 @@ class SupabaseService {
         'upvotes': comment.upvotes,
         'created_at': comment.dateTime.toUtc().toIso8601String(),
       };
-      if (comment.authorAvatar != null && comment.authorAvatar!.isNotEmpty) {
-        data['author_avatar'] = comment.authorAvatar;
-      }
-      if (userId != null) {
-        data['user_id'] = userId;
-      }
-      try {
-        await client.from('forum_comments').upsert(data, onConflict: 'id');
-      } catch (upsertErr) {
-        if (upsertErr.toString().contains('PGRST204') || upsertErr.toString().contains('author_avatar')) {
-          data.remove('author_avatar');
-          data.remove('author_avatar_url');
-          await client.from('forum_comments').upsert(data, onConflict: 'id');
-        } else {
-          rethrow;
-        }
-      }
-      debugPrint("💬 Forum comment/reply ${comment.id} (parentId: $cleanParentId) synced directly to Supabase.");
+      await client.from('forum_comments').upsert(data, onConflict: 'id');
+      debugPrint("💬 Forum comment/reply ${comment.id} (parentId: $cleanParentId) synced directly to Supabase cloud.");
     } catch (e) {
       debugPrint("⚠️ Could not sync forum comment to Supabase cloud (saved locally): $e");
     }
