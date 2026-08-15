@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/garden_provider.dart';
 import '../../models/forum_post.dart';
 import '../../services/api/supabase_service.dart';
+import '../../services/database_service.dart';
 import '../../services/image_service.dart';
 import '../../core/utils/error_utils.dart';
 
@@ -176,11 +177,20 @@ class _ForumScreenState extends State<ForumScreen> {
           _posts = freshPosts;
           _isOffline = false;
         } else {
-          _isOffline = true;
+          _isOffline = false;
         }
         _isLoading = false;
         _hasMorePosts = _posts.length >= _pageSize;
       });
+
+      if (freshPosts.isEmpty) {
+        final localPosts = await DatabaseService.getForumPosts();
+        if (mounted) {
+          setState(() {
+            _posts = localPosts.isNotEmpty ? localPosts : List.from(ForumPost.defaultPosts);
+          });
+        }
+      }
     }
   }
 
@@ -1293,8 +1303,6 @@ class _ForumScreenState extends State<ForumScreen> {
                             dateTime: DateTime.now(),
                           );
 
-                          await SupabaseService().createForumPost(newPost);
-
                           setState(() {
                             _posts.insert(0, newPost);
                           });
@@ -1308,6 +1316,11 @@ class _ForumScreenState extends State<ForumScreen> {
                               ),
                             );
                           }
+
+                          // Sync post to cloud & local storage in background
+                          SupabaseService().createForumPost(newPost).catchError((e) {
+                            debugPrint("⚠️ Background cloud sync for post ${newPost.id}: $e");
+                          });
                         } catch (e) {
                           parentMessenger.showSnackBar(
                             SnackBar(
@@ -1813,33 +1826,28 @@ class _ForumScreenState extends State<ForumScreen> {
                                   );
                                   final parentId = replyingToComment?.id;
 
-                                  try {
-                                    await SupabaseService().createForumComment(post.id, parentId, newCommentObj);
-                                    setModalState(() {
-                                      if (replyingToComment != null) {
-                                        _addReplyRecursive(post.comments, replyingToComment!.id, newCommentObj);
-                                        replyingToComment = null;
-                                      } else {
-                                        post.comments.add(newCommentObj);
-                                      }
-                                    });
-                                    setState(() {});
-                                    commentController.clear();
-                                    parentMessenger.showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Comment published! 💬'),
-                                        backgroundColor: AppTheme.primaryGreen,
-                                        duration: Duration(seconds: 2),
-                                      ),
-                                    );
-                                  } catch (e) {
-                                    parentMessenger.showSnackBar(
-                                      SnackBar(
-                                        content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to post comment')),
-                                        backgroundColor: AppTheme.dangerRed,
-                                      ),
-                                    );
-                                  }
+                                  setModalState(() {
+                                    if (replyingToComment != null) {
+                                      _addReplyRecursive(post.comments, replyingToComment!.id, newCommentObj);
+                                      replyingToComment = null;
+                                    } else {
+                                      post.comments.add(newCommentObj);
+                                    }
+                                  });
+                                  setState(() {});
+                                  commentController.clear();
+                                  parentMessenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Comment published! 💬'),
+                                      backgroundColor: AppTheme.primaryGreen,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+
+                                  // Sync comment to cloud & local storage in background
+                                  SupabaseService().createForumComment(post.id, parentId, newCommentObj).catchError((e) {
+                                    debugPrint("⚠️ Background cloud sync for comment ${newCommentObj.id}: $e");
+                                  });
                                 },
                               ),
                             ),

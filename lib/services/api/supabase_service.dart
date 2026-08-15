@@ -434,6 +434,9 @@ class SupabaseService {
 
   /// Create a new forum post directly in Supabase
   Future<void> createForumPost(ForumPost post) async {
+    // 1. Always save to local SQLite database first for instant offline/online persistence
+    await DatabaseService.saveForumPost(post);
+
     if (!_isInitialized) return;
     try {
       final userId = client.auth.currentUser?.id;
@@ -458,8 +461,7 @@ class SupabaseService {
       await client.from('forum_posts').upsert(data, onConflict: 'id');
       debugPrint("💬 Forum post ${post.id} synced directly to Supabase.");
     } catch (e) {
-      debugPrint("⚠️ Failed to create forum post in Supabase: $e");
-      rethrow;
+      debugPrint("⚠️ Could not sync forum post to Supabase cloud (saved locally): $e");
     }
   }
 
@@ -541,8 +543,7 @@ class SupabaseService {
       await client.from('forum_comments').upsert(data, onConflict: 'id');
       debugPrint("💬 Forum comment/reply ${comment.id} (parentId: $cleanParentId) synced directly to Supabase.");
     } catch (e) {
-      debugPrint("⚠️ Failed to create forum comment in Supabase: $e");
-      rethrow;
+      debugPrint("⚠️ Could not sync forum comment to Supabase cloud (saved locally): $e");
     }
   }
 
