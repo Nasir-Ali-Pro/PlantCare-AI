@@ -1074,6 +1074,7 @@ class SupabaseService {
   /// Calls [onNotification] whenever a new comment or upvote occurs.
   RealtimeChannel? subscribeToForumNotifications({
     required Function(Map<String, dynamic> notification) onNotification,
+    String? currentUserName,
   }) {
     if (!_isInitialized) return null;
 
@@ -1088,9 +1089,12 @@ class SupabaseService {
         table: 'forum_comments',
         callback: (payload) {
           final newComment = payload.newRecord;
-          final authorId = newComment['auth_users_id'];
+          final authorId = newComment['auth_users_id'] ?? newComment['user_id'];
+          final authorName = newComment['author_name'] as String?;
+
           // Don't notify user of their own comments
-          if (currentUserId != null && authorId == currentUserId) return;
+          if (currentUserId != null && authorId != null && authorId == currentUserId) return;
+          if (currentUserName != null && authorName != null && authorName.trim() == currentUserName.trim()) return;
 
           onNotification({
             'id': newComment['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),

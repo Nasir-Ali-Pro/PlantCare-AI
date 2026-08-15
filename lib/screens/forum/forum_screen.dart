@@ -169,9 +169,20 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   void _initRealtimeNotifications() {
+    final gardenProvider = Provider.of<GardenProvider>(context, listen: false);
+    final currentUsername = gardenProvider.username;
+
     _realtimeChannel = SupabaseService().subscribeToForumNotifications(
+      currentUserName: currentUsername,
       onNotification: (notif) {
         if (!mounted) return;
+
+        // Never notify or count self-activity (comments or upvotes by the logged-in user)
+        if (notif['actor_name'] != null &&
+            notif['actor_name'].toString().trim() == currentUsername.trim()) {
+          return;
+        }
+
         setState(() {
           _notifications.insert(0, notif);
           _unreadCount++;
