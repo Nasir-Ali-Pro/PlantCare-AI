@@ -296,7 +296,7 @@ class SupabaseService {
       await prefs.setStringList('pref_upvoted_post_ids', combined.toList());
       return combined;
     } catch (e) {
-      debugPrint("⚠️ Could not fetch user upvoted post IDs from Supabase table: $e");
+      // Quietly fallback to local upvoted post IDs cache if likes table doesn't exist in Supabase schema
       return localIds;
     }
   }
@@ -320,7 +320,7 @@ class SupabaseService {
       await prefs.setStringList('pref_upvoted_comment_ids', combined.toList());
       return combined;
     } catch (e) {
-      debugPrint("⚠️ Could not fetch user upvoted comment IDs from Supabase table: $e");
+      // Quietly fallback to local upvoted comment IDs cache if likes table doesn't exist in Supabase schema
       return localIds;
     }
   }
@@ -330,32 +330,8 @@ class SupabaseService {
     final bool newIsUpvoted = !currentIsUpvoted;
     final int newUpvotes = newIsUpvoted ? currentUpvotes + 1 : (currentUpvotes - 1).clamp(0, 99999);
 
-    if (!_isInitialized) {
-      return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
-    }
-
-    final userId = client.auth.currentUser?.id;
-
+    // 1. Always update local SharedPreferences cache first for 100% reliable UI response
     try {
-      if (userId != null) {
-        if (newIsUpvoted) {
-          await client.from('forum_post_likes').upsert({
-            'user_id': userId,
-            'post_id': postId,
-            'created_at': DateTime.now().toUtc().toIso8601String(),
-          }, onConflict: 'user_id,post_id');
-        } else {
-          await client
-              .from('forum_post_likes')
-              .delete()
-              .eq('user_id', userId)
-              .eq('post_id', postId);
-        }
-      }
-
-      await client.from('forum_posts').update({'upvotes': newUpvotes}).eq('id', postId);
-
-      // Local prefs cache update for smooth UI
       final prefs = await SharedPreferences.getInstance();
       List<String> upvotedPostIds = prefs.getStringList('pref_upvoted_post_ids') ?? [];
       if (newIsUpvoted) {
@@ -364,10 +340,40 @@ class SupabaseService {
         upvotedPostIds.remove(postId);
       }
       await prefs.setStringList('pref_upvoted_post_ids', upvotedPostIds);
+    } catch (prefErr) {
+      debugPrint("⚠️ Local upvote cache error: $prefErr");
+    }
 
-      debugPrint("👍 Post $postId upvote toggled in Supabase cloud: isUpvoted=$newIsUpvoted, upvotes=$newUpvotes");
+    if (!_isInitialized) {
+      return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
+    }
+
+    final userId = client.auth.currentUser?.id;
+
+    try {
+      if (userId != null) {
+        try {
+          if (newIsUpvoted) {
+            await client.from('forum_post_likes').upsert({
+              'user_id': userId,
+              'post_id': postId,
+              'created_at': DateTime.now().toUtc().toIso8601String(),
+            }, onConflict: 'user_id,post_id');
+          } else {
+            await client
+                .from('forum_post_likes')
+                .delete()
+                .eq('user_id', userId)
+                .eq('post_id', postId);
+          }
+        } catch (likesTableErr) {
+          // Likes join table optional or not yet created in Supabase schema
+        }
+      }
+
+      await client.from('forum_posts').update({'upvotes': newUpvotes}).eq('id', postId);
+      debugPrint("👍 Post $postId upvote toggled: isUpvoted=$newIsUpvoted, upvotes=$newUpvotes");
     } catch (e) {
-      debugPrint("⚠️ Error toggling post upvote in Supabase cloud: $e");
       await updateForumPostUpvotes(postId, newUpvotes);
     }
 
@@ -379,32 +385,8 @@ class SupabaseService {
     final bool newIsUpvoted = !currentIsUpvoted;
     final int newUpvotes = newIsUpvoted ? currentUpvotes + 1 : (currentUpvotes - 1).clamp(0, 99999);
 
-    if (!_isInitialized) {
-      return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
-    }
-
-    final userId = client.auth.currentUser?.id;
-
+    // 1. Always update local SharedPreferences cache first for 100% reliable UI response
     try {
-      if (userId != null) {
-        if (newIsUpvoted) {
-          await client.from('forum_comment_likes').upsert({
-            'user_id': userId,
-            'comment_id': commentId,
-            'created_at': DateTime.now().toUtc().toIso8601String(),
-          }, onConflict: 'user_id,comment_id');
-        } else {
-          await client
-              .from('forum_comment_likes')
-              .delete()
-              .eq('user_id', userId)
-              .eq('comment_id', commentId);
-        }
-      }
-
-      await client.from('forum_comments').update({'upvotes': newUpvotes}).eq('id', commentId);
-
-      // Local prefs cache update for smooth UI
       final prefs = await SharedPreferences.getInstance();
       List<String> upvotedCommentIds = prefs.getStringList('pref_upvoted_comment_ids') ?? [];
       if (newIsUpvoted) {
@@ -413,10 +395,40 @@ class SupabaseService {
         upvotedCommentIds.remove(commentId);
       }
       await prefs.setStringList('pref_upvoted_comment_ids', upvotedCommentIds);
+    } catch (prefErr) {
+      debugPrint("⚠️ Local comment upvote cache error: $prefErr");
+    }
 
-      debugPrint("💖 Comment $commentId upvote toggled in Supabase cloud: isUpvoted=$newIsUpvoted, upvotes=$newUpvotes");
+    if (!_isInitialized) {
+      return {'isUpvoted': newIsUpvoted, 'upvotes': newUpvotes};
+    }
+
+    final userId = client.auth.currentUser?.id;
+
+    try {
+      if (userId != null) {
+        try {
+          if (newIsUpvoted) {
+            await client.from('forum_comment_likes').upsert({
+              'user_id': userId,
+              'comment_id': commentId,
+              'created_at': DateTime.now().toUtc().toIso8601String(),
+            }, onConflict: 'user_id,comment_id');
+          } else {
+            await client
+                .from('forum_comment_likes')
+                .delete()
+                .eq('user_id', userId)
+                .eq('comment_id', commentId);
+          }
+        } catch (likesTableErr) {
+          // Likes join table optional or not yet created in Supabase schema
+        }
+      }
+
+      await client.from('forum_comments').update({'upvotes': newUpvotes}).eq('id', commentId);
+      debugPrint("💖 Comment $commentId upvote toggled: isUpvoted=$newIsUpvoted, upvotes=$newUpvotes");
     } catch (e) {
-      debugPrint("⚠️ Error toggling comment upvote in Supabase cloud: $e");
       await updateForumCommentUpvotes(commentId, newUpvotes);
     }
 
