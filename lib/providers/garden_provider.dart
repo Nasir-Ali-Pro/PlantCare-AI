@@ -174,6 +174,12 @@ class GardenProvider extends ChangeNotifier {
     try {
       final currentUser = SupabaseService().client.auth.currentUser;
       if (currentUser != null) {
+        final profile = await SupabaseService().fetchUserProfile(currentUser.id);
+        if (profile != null && profile['avatar_url'] != null && (profile['avatar_url'] as String).isNotEmpty) {
+          _avatarUrl = profile['avatar_url'] as String;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('pref_avatar_url', _avatarUrl);
+        }
         final prefs = await SharedPreferences.getInstance();
         final String? geminiKey = _role == 'admin' ? prefs.getString('gemini_api_key') : null;
         await SupabaseService().syncUserProfile(

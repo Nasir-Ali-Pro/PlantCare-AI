@@ -208,6 +208,7 @@ class SupabaseService {
           id: commentId,
           authorName: c['author_name'] ?? 'Gardener',
           authorTitle: c['author_title'] ?? 'Gardener',
+          authorAvatar: c['author_avatar'] as String? ?? c['author_avatar_url'] as String?,
           isVerifiedExpert: c['is_verified_expert'] ?? false,
           content: c['content'] ?? '',
           dateTime: DateTime.tryParse(c['created_at'] ?? '') ?? DateTime.now(),
@@ -897,6 +898,22 @@ class SupabaseService {
       debugPrint("👤 Successfully synced user profile to Supabase: $username (role: $role)");
     } catch (e) {
       debugPrint("⚠️ Failed to sync user profile: $e");
+    }
+  }
+
+  /// Fetches a user's profile row from user_profiles table in Supabase.
+  Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
+    if (!_isInitialized) return null;
+    try {
+      final response = await client
+          .from('user_profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      debugPrint("⚠️ Failed to fetch user profile for $userId: $e");
+      return null;
     }
   }
 
