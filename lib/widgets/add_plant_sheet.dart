@@ -375,6 +375,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
                                 SnackBar(
                                   content: Text('🌱 ${_nameCtrl.text.trim()} added to your garden.'),
                                   backgroundColor: AppColors.primary,
+                                  behavior: SnackBarBehavior.floating,
                                 ),
                               );
                             }
@@ -384,6 +385,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
                                 SnackBar(
                                   content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Could not add plant')),
                                   backgroundColor: AppColors.danger,
+                                  behavior: SnackBarBehavior.floating,
                                 ),
                               );
                             }

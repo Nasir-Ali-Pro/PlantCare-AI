@@ -1086,6 +1086,7 @@ class _ForumScreenState extends State<ForumScreen> {
                   const SnackBar(
                     content: Text('Comment updated ✏️'),
                     backgroundColor: AppTheme.primaryGreen,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
@@ -1137,6 +1138,7 @@ class _ForumScreenState extends State<ForumScreen> {
                   const SnackBar(
                     content: Text('Comment deleted.'),
                     backgroundColor: Color(0xFFEF4444),
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
@@ -2073,6 +2075,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                     const SnackBar(
                                       content: Text('Comment published! 💬'),
                                       backgroundColor: AppTheme.primaryGreen,
+                                      behavior: SnackBarBehavior.floating,
                                       duration: Duration(seconds: 2),
                                     ),
                                   );
