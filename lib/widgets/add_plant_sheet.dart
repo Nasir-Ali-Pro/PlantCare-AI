@@ -354,6 +354,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
                               }
                             }
 
+                            final parentMessenger = ScaffoldMessenger.of(context);
                             await widget.provider.addPlant(
                               nickname: _nameCtrl.text.trim(),
                               species: _speciesCtrl.text.trim(),
@@ -369,7 +370,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
 
                             if (context.mounted) {
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              parentMessenger.showSnackBar(
                                 SnackBar(
                                   content: Text('🌱 ${_nameCtrl.text.trim()} added to your garden.'),
                                   backgroundColor: AppColors.primary,

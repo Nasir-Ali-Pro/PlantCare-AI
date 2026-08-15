@@ -942,6 +942,7 @@ class _ForumScreenState extends State<ForumScreen> {
       }
     }
 
+    final parentMessenger = ScaffoldMessenger.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1300,7 +1301,7 @@ class _ForumScreenState extends State<ForumScreen> {
 
                           if (context.mounted) {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            parentMessenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Post published to Community Forum! 📣'),
                                 backgroundColor: AppTheme.primaryGreen,
@@ -1308,14 +1309,12 @@ class _ForumScreenState extends State<ForumScreen> {
                             );
                           }
                         } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to publish post')),
-                                backgroundColor: AppTheme.dangerRed,
-                              ),
-                            );
-                          }
+                          parentMessenger.showSnackBar(
+                            SnackBar(
+                              content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to publish post')),
+                              backgroundColor: AppTheme.dangerRed,
+                            ),
+                          );
                         } finally {
                           setModalState(() {
                             isSubmitting = false;
@@ -1363,6 +1362,7 @@ class _ForumScreenState extends State<ForumScreen> {
   void _showCommentsModal(BuildContext context, ForumPost post) {
     final commentController = TextEditingController();
     ForumComment? replyingToComment;
+    final parentMessenger = ScaffoldMessenger.of(context);
 
     showModalBottomSheet(
       context: context,
@@ -1825,15 +1825,20 @@ class _ForumScreenState extends State<ForumScreen> {
                                     });
                                     setState(() {});
                                     commentController.clear();
+                                    parentMessenger.showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Comment published! 💬'),
+                                        backgroundColor: AppTheme.primaryGreen,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
                                   } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to post comment')),
-                                          backgroundColor: AppTheme.dangerRed,
-                                        ),
-                                      );
-                                    }
+                                    parentMessenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to post comment')),
+                                        backgroundColor: AppTheme.dangerRed,
+                                      ),
+                                    );
                                   }
                                 },
                               ),

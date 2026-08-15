@@ -753,8 +753,9 @@ class ResultScreen extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () async {
                         final nickname = nicknameController.text.trim();
+                        final parentMessenger = ScaffoldMessenger.of(context);
                         if (nickname.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          parentMessenger.showSnackBar(
                             const SnackBar(content: Text('Please enter a nickname!')),
                           );
                           return;
@@ -773,7 +774,7 @@ class ResultScreen extends StatelessWidget {
                         
                         if (context.mounted) {
                           Navigator.pop(context); // Close bottom sheet
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          parentMessenger.showSnackBar(
                             SnackBar(
                               content: Text('Added $nickname to garden! 🌱'),
                               backgroundColor: AppColors.primary,
