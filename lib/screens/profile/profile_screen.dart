@@ -94,6 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SnackBar(
               content: Text('Profile picture updated successfully!'),
               backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -105,6 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SnackBar(
               content: Text('Profile picture saved locally (offline).'),
               backgroundColor: AppColors.warning,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -117,6 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Failed to upload image, fell back to local save: $e',
             ),
             backgroundColor: AppTheme.dangerRed,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -162,7 +165,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Signed out successfully.'),
-                  backgroundColor: AppTheme.bgDarkEnd,
+                  backgroundColor: AppColors.surfaceElevated,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             },
@@ -426,9 +430,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.6),
-                      width: 2,
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.7),
+                      width: 2.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.25),
+                        blurRadius: 14,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
                   child: CircleAvatar(
                     radius: 46,
@@ -591,7 +602,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Redirecting to Registration... 🔒'),
-                  backgroundColor: AppTheme.bgDarkEnd,
+                  backgroundColor: AppColors.surfaceElevated,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             },
@@ -1014,6 +1026,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SnackBar(
                     content: Text('Diagnostics history cleared successfully.'),
                     backgroundColor: AppTheme.primaryGreen,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               },
@@ -1114,6 +1127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SnackBar(
                           content: Text('Profile name updated.'),
                           backgroundColor: AppTheme.primaryGreen,
+                          behavior: SnackBarBehavior.floating,
                         ),
                       );
                     }
@@ -1268,6 +1282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     backgroundColor: success
                                         ? AppTheme.primaryGreen
                                         : Colors.orange,
+                                    behavior: SnackBarBehavior.floating,
                                     duration: const Duration(seconds: 3),
                                   ),
                                 );

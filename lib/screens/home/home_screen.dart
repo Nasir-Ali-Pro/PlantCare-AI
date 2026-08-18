@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                               const SizedBox(width: 16),
                               GestureDetector(
                                 onTap: () {
                                   Navigator.push(
@@ -354,31 +354,36 @@ class _HomeScreenState extends State<HomeScreen> {
                                   );
                                 },
                                 child: Container(
-                                  width: 52,
-                                  height: 52,
+                                  width: 56,
+                                  height: 56,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.65), width: 2.5),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withValues(alpha: 0.2),
-                                        blurRadius: 12,
-                                        spreadRadius: 1,
+                                        color: AppColors.primary.withValues(alpha: 0.30),
+                                        blurRadius: 16,
+                                        spreadRadius: 2,
                                       ),
                                     ],
-                                    gradient: const LinearGradient(
-                                      colors: [AppColors.primary, AppColors.secondary],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
+                                    gradient: gardenProvider.avatarUrl.isEmpty
+                                        ? const LinearGradient(
+                                            colors: [AppColors.primary, AppColors.secondary],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : null,
+                                    color: gardenProvider.avatarUrl.isNotEmpty
+                                        ? AppColors.surfaceElevated
+                                        : null,
                                   ),
                                   child: gardenProvider.avatarUrl.isNotEmpty
                                       ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(26),
+                                          borderRadius: BorderRadius.circular(28),
                                           child: buildPlantImage(
                                             gardenProvider.avatarUrl,
-                                            width: 52,
-                                            height: 52,
+                                            width: 56,
+                                            height: 56,
                                             fit: BoxFit.cover,
                                           ),
                                         )
@@ -386,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           child: Icon(
                                             Icons.person_outline_rounded,
                                             color: Colors.white,
-                                            size: 26,
+                                            size: 28,
                                           ),
                                         ),
                                 ).animate().fade(duration: 350.ms, delay: 150.ms).scale(begin: const Offset(0.8, 0.8)),
@@ -478,19 +483,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.only(left: 24.0, top: 16.0, bottom: 12.0),
-                          child: Text(
-                            'Recent scans',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: AppColors.onSurfaceMuted,
-                            ),
+                        Padding(
+                          padding: EdgeInsets.only(left: horizontalPadding, top: 16.0, bottom: 10.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 3,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'RECENT SCANS',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                  letterSpacing: 1.2,
+                                  color: AppColors.onSurfaceMuted,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         SizedBox(
-                          height: 120,
+                          height: 136,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -507,80 +526,95 @@ class _HomeScreenState extends State<HomeScreen> {
                                   );
                                 },
                                 child: Container(
-                                  width: 260,
-                                  margin: const EdgeInsets.only(right: 16),
+                                  width: 270,
+                                  margin: const EdgeInsets.only(right: 14),
                                   child: AppCard(
-                                    padding: const EdgeInsets.all(12),
-                                    borderRadius: 16,
+                                    padding: EdgeInsets.zero,
+                                    borderRadius: 18,
                                     color: AppColors.surfaceElevated,
-                                    borderColor: AppColors.borderLight.withValues(alpha: 0.2),
+                                    borderColor: AppColors.borderLight.withValues(alpha: 0.25),
                                     child: Row(
                                       children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: buildPlantImage(
-                                            report.imagePath,
-                                            width: 60,
-                                            height: 60,
-                                            fit: BoxFit.cover,
-                                          ),
+                                        // Image with health overlay
+                                        Stack(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius: const BorderRadius.horizontal(
+                                                left: Radius.circular(18),
+                                              ),
+                                              child: buildPlantImage(
+                                                report.imagePath,
+                                                width: 70,
+                                                height: 136,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                report.diseaseName,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.onSurface,
-                                                  fontSize: 14,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  report.diseaseName,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w800,
+                                                    color: AppColors.onSurface,
+                                                    fontSize: 13.5,
+                                                    letterSpacing: -0.2,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                report.plantName,
-                                                style: const TextStyle(
-                                                  color: AppColors.onSurfaceMuted,
-                                                  fontSize: 12,
+                                                const SizedBox(height: 3),
+                                                Text(
+                                                  report.plantName,
+                                                  style: const TextStyle(
+                                                    color: AppColors.onSurfaceMuted,
+                                                    fontSize: 11.5,
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: (report.source.toLowerCase().contains('device') 
-                                                      ? AppColors.warning 
-                                                      : AppColors.primary).withValues(alpha: 0.12),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                  border: Border.all(
-                                                    color: (report.source.toLowerCase().contains('device') 
-                                                        ? AppColors.warning 
-                                                        : AppColors.primary).withValues(alpha: 0.25),
-                                                    width: 0.8,
+                                                const Spacer(),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: (report.source.toLowerCase().contains('device')
+                                                            ? AppColors.warning
+                                                            : AppColors.primary)
+                                                        .withValues(alpha: 0.14),
+                                                    borderRadius: BorderRadius.circular(7),
+                                                    border: Border.all(
+                                                      color: (report.source.toLowerCase().contains('device')
+                                                              ? AppColors.warning
+                                                              : AppColors.primary)
+                                                          .withValues(alpha: 0.28),
+                                                      width: 0.8,
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    report.source.toUpperCase(),
+                                                    style: TextStyle(
+                                                      color: report.source.toLowerCase().contains('device')
+                                                          ? AppColors.warning
+                                                          : AppColors.primaryLight,
+                                                      fontWeight: FontWeight.w800,
+                                                      fontSize: 8,
+                                                      letterSpacing: 0.6,
+                                                    ),
                                                   ),
                                                 ),
-                                                child: Text(
-                                                  report.source.toUpperCase(),
-                                                  style: TextStyle(
-                                                    color: report.source.toLowerCase().contains('device') 
-                                                        ? AppColors.warning 
-                                                        : AppColors.primaryLight,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 8,
-                                                    letterSpacing: 0.5,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
+                                        const SizedBox(width: 8),
                                       ],
                                     ),
                                   ),
@@ -839,11 +873,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: IconButton(
                             onPressed: () {
                               provider.waterPlant(plant.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
+                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${plant.nickname} has been watered.'),
+                                  content: Text('💧 ${plant.nickname} watered!'),
                                   backgroundColor: AppColors.primary,
-                                  duration: const Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: const Duration(seconds: 2),
                                 ),
                               );
                             },
@@ -871,11 +906,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: IconButton(
                             onPressed: () {
                               provider.fertilizePlant(plant.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
+                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${plant.nickname} has been fertilized.'),
+                                  content: Text('🧪 ${plant.nickname} fertilized!'),
                                   backgroundColor: AppColors.primary,
-                                  duration: const Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: const Duration(seconds: 2),
                                 ),
                               );
                             },

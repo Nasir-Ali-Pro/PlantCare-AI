@@ -8,25 +8,28 @@ class AppColors {
   static const Color primary = Color(0xFF4A7C59);
   static const Color primaryLight = Color(0xFF6B9E78);
   static const Color primaryDark = Color(0xFF345740);
+  static const Color primaryGlow = Color(0xFF4A7C59); // used for glow shadows
 
   // Secondary
   static const Color secondary = Color(0xFFA3B18A);
 
   // Background & Surface
-  static const Color background = Color(0xFF141A14);
-  static const Color backgroundLight = Color(0xFF1A211A);
-  static const Color surface = Color(0xFF1E251E);
-  static const Color surfaceElevated = Color(0xFF252E25);
-  static const Color surfaceHighlight = Color(0xFF2C362C);
+  static const Color background = Color(0xFF111611);
+  static const Color backgroundLight = Color(0xFF181E18);
+  static const Color surface = Color(0xFF1C231C);
+  static const Color surfaceElevated = Color(0xFF222A22);
+  static const Color surfaceHighlight = Color(0xFF29322A);
+  static const Color surfaceGlass = Color(0x661C231C); // semi-transparent glass
 
   // Text
-  static const Color onSurface = Color(0xFFE4E0D6);
+  static const Color onSurface = Color(0xFFE8E4DA);
   static const Color onSurfaceMuted = Color(0xFF9CA396);
   static const Color onSurfaceFaint = Color(0xFF5C6358);
+  static const Color onPrimary = Colors.white;
 
   // Borders
-  static const Color border = Color(0xFF2E382E);
-  static const Color borderLight = Color(0xFF3A4539);
+  static const Color border = Color(0xFF2A342A);
+  static const Color borderLight = Color(0xFF36423A);
 
   // Semantic
   static const Color success = Color(0xFF4A7C59);
@@ -39,7 +42,12 @@ class AppColors {
   static const Color accent = Color(0xFFC4956A);
   static const Color accentLight = Color(0xFFD4A87D);
 
+  // Gradients helpers
+  static const Color heroGradientStart = Color(0xFF1E2D20);
+  static const Color heroGradientEnd = Color(0xFF111611);
+
   // Misc
-  static const Color shimmer = Color(0xFF2A332A);
-  static const Color divider = Color(0xFF262E26);
+  static const Color shimmer = Color(0xFF272F27);
+  static const Color shimmerHighlight = Color(0xFF313A31);
+  static const Color divider = Color(0xFF222A22);
 }

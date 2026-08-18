@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/garden_plant.dart';
 import '../../providers/garden_provider.dart';
@@ -139,92 +140,121 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
       decoration: const BoxDecoration(gradient: AppTheme.darkBgGradient),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Stack(
             children: [
-              Icon(Icons.yard_rounded, color: AppTheme.primaryGreen, size: 24),
-              const SizedBox(width: 8),
-              Text('My Garden', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.yard_rounded, color: AppTheme.primaryGreen, size: 24),
+                    const SizedBox(width: 8),
+                    Text('My Garden', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                actions: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.alarm_rounded,
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.9),
+                      size: 22,
+                    ),
+                    tooltip: 'Reminder Time',
+                    onPressed: () async {
+                      final provider = Provider.of<GardenProvider>(context, listen: false);
+                      final initialTime = TimeOfDay(
+                        hour: provider.reminderHour,
+                        minute: provider.reminderMinute,
+                      );
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: initialTime,
+                        helpText: 'SET DAILY REMINDER TIME',
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.dark(
+                                primary: AppTheme.primaryGreen,
+                                onPrimary: Colors.white,
+                                surface: const Color(0xFF1E293B),
+                                onSurface: Colors.white,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        await provider.setReminderTime(picked.hour, picked.minute);
+                        if (context.mounted) {
+                          final timeStr = picked.format(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Daily care reminders set to $timeStr'),
+                              backgroundColor: AppTheme.primaryGreen,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              duration: const Duration(seconds: 2),
+                              margin: const EdgeInsets.fromLTRB(24, 0, 24, 80),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.forum_rounded, color: Colors.white70),
+                    tooltip: 'Community Forum',
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForumScreen())),
+                  ),
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                    ),
+                    tooltip: 'Add Plant',
+                    onPressed: () => showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => AddPlantSheet(
+                        provider: Provider.of<GardenProvider>(context, listen: false),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+              // Subtle bottom-fade so content scrolls cleanly under the AppBar
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.background.withValues(alpha: 0.0),
+                        AppColors.background.withValues(alpha: 0.55),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                Icons.alarm_rounded,
-                color: AppTheme.primaryGreen.withValues(alpha: 0.9),
-                size: 22,
-              ),
-              tooltip: 'Reminder Time',
-              onPressed: () async {
-                final provider = Provider.of<GardenProvider>(context, listen: false);
-                final initialTime = TimeOfDay(
-                  hour: provider.reminderHour,
-                  minute: provider.reminderMinute,
-                );
-                final picked = await showTimePicker(
-                  context: context,
-                  initialTime: initialTime,
-                  helpText: 'SET DAILY REMINDER TIME',
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.dark(
-                          primary: AppTheme.primaryGreen,
-                          onPrimary: Colors.white,
-                          surface: const Color(0xFF1E293B),
-                          onSurface: Colors.white,
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
-                );
-                if (picked != null) {
-                  await provider.setReminderTime(picked.hour, picked.minute);
-                  if (context.mounted) {
-                    final timeStr = picked.format(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Daily care reminders set to $timeStr'),
-                        backgroundColor: AppTheme.primaryGreen,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.forum_rounded, color: Colors.white70),
-              tooltip: 'Community Forum',
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForumScreen())),
-            ),
-            IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-              ),
-              tooltip: 'Add Plant',
-              onPressed: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                useSafeArea: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) => AddPlantSheet(
-                  provider: Provider.of<GardenProvider>(context, listen: false),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
         ),
         body: SafeArea(
           child: Consumer<GardenProvider>(
@@ -274,16 +304,8 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
                   if (filteredPlants.isEmpty)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.all(48),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(Icons.search_off_rounded, size: 48, color: Colors.white.withValues(alpha: 0.3)),
-                              const SizedBox(height: 12),
-                              Text('No plants match your filter', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
-                            ],
-                          ),
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+                        child: _buildFilterEmptyState(),
                       ),
                     )
                   else if (_isGridView)
@@ -348,40 +370,64 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
   // ── Stats Dashboard ──────────────────────────────────────
   Widget _buildStatsRow(GardenProvider provider) {
     final stats = [
-      _StatItem(Icons.eco_rounded, '${provider.plants.length}', 'Plants', AppTheme.primaryGreen),
+      _StatItem(Icons.eco_rounded, '${provider.plants.length}', 'Plants', AppColors.primary),
       _StatItem(Icons.favorite_rounded, '${provider.averageHealthScore.toInt()}%', 'Health', _getHealthColor(provider.averageHealthScore.toInt())),
-      _StatItem(Icons.warning_amber_rounded, '${provider.needsCareCount}', 'Need Care', AppTheme.accentAmber),
-      _StatItem(Icons.report_problem_rounded, '${provider.criticalPlantCount}', 'Critical', AppTheme.dangerRed),
+      _StatItem(Icons.warning_amber_rounded, '${provider.needsCareCount}', 'Care', AppColors.warning),
+      _StatItem(Icons.report_problem_rounded, '${provider.criticalPlantCount}', 'Critical', AppColors.danger),
       _StatItem(Icons.menu_book_rounded, '${provider.totalJournalEntries}', 'Journal', const Color(0xFFA78BFA)),
     ];
 
     return Row(
       children: List.generate(stats.length, (i) {
         final s = stats[i];
+        final bool isLast = i == stats.length - 1;
         return Expanded(
           child: Padding(
-            padding: EdgeInsets.only(right: i < stats.length - 1 ? 8 : 0),
-            child: AppCard(
-              borderRadius: 16,
+            padding: EdgeInsets.only(right: isLast ? 0 : 6),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: s.color.withValues(alpha: 0.18), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: s.color.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(s.icon, color: s.color, size: 18),
-                  const SizedBox(height: 4),
+                  // Colored icon circle
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: s.color.withValues(alpha: 0.13),
+                    ),
+                    child: Icon(s.icon, color: s.color, size: 15),
+                  ),
+                  const SizedBox(height: 5),
+                  // Value
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
                       s.value,
                       maxLines: 1,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Colors.white.withValues(alpha: 0.95),
+                        height: 1.1,
                       ),
                     ),
                   ),
                   const SizedBox(height: 2),
+                  // Label
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
@@ -389,17 +435,29 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       style: TextStyle(
-                        fontSize: 8.5,
+                        fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                        color: Colors.white.withValues(alpha: 0.45),
+                        letterSpacing: 0.2,
+                        color: AppColors.onSurfaceMuted,
                       ),
+                    ),
+                  ),
+                  // Subtle colored bottom accent line
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 2,
+                    width: 20,
+                    decoration: BoxDecoration(
+                      color: s.color.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(1),
                     ),
                   ),
                 ],
               ),
-            ),
-          ).animate().fade(duration: 400.ms, delay: (80 * i).ms).slideY(begin: 0.15, end: 0, duration: 400.ms, delay: (80 * i).ms),
+            ).animate()
+              .fade(duration: 400.ms, delay: (80 * i).ms)
+              .slideY(begin: 0.2, end: 0, duration: 400.ms, delay: (80 * i).ms, curve: Curves.easeOut),
+          ),
         );
       }),
     );
@@ -409,6 +467,15 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
 
   // ── Search / Filter / Sort Bar ───────────────────────────
   Widget _buildSearchFilterBar() {
+    // Chip color map keyed by filter label
+    final chipColors = <String, Color>{
+      'All': AppColors.primary,
+      'Healthy': AppColors.primary,
+      'Thirsty': const Color(0xFF38BDF8),
+      'Fertilize': AppColors.warning,
+      'Critical': AppColors.danger,
+    };
+
     final filters = [
       _FilterChip('All', null),
       _FilterChip('Healthy', Icons.check_circle_rounded),
@@ -419,7 +486,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
 
     return Column(
       children: [
-        // Search row
+        // ── Search row ──
         Row(
           children: [
             Expanded(
@@ -428,36 +495,48 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
                 style: const TextStyle(color: Colors.white, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Search plants...',
-                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
-                  prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.4), size: 20),
+                  hintStyle: TextStyle(color: AppColors.onSurfaceFaint, fontSize: 13),
+                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.onSurfaceMuted, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.close_rounded, color: Colors.white.withValues(alpha: 0.4), size: 18),
+                          icon: Icon(Icons.close_rounded, color: AppColors.onSurfaceMuted, size: 18),
                           onPressed: () { _searchController.clear(); setState(() => _searchQuery = ''); },
                         )
                       : null,
                   filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.06),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.2)),
+                  fillColor: AppColors.surfaceElevated,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: BorderSide(color: AppColors.border, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
                 ),
                 onChanged: (val) => setState(() => _searchQuery = val),
               ),
             ),
             const SizedBox(width: 10),
-            // Sort button
+            // ── Sort button ──
             PopupMenuButton<String>(
+              tooltip: 'Sort',
               icon: Container(
-                padding: const EdgeInsets.all(10),
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: AppColors.surfaceElevated,
                   borderRadius: BorderRadius.circular(14),
-                  
+                  border: Border.all(color: AppColors.border, width: 1),
                 ),
-                child: Icon(Icons.sort_rounded, color: Colors.white.withValues(alpha: 0.6), size: 20),
+                child: Icon(Icons.sort_rounded, color: AppColors.onSurfaceMuted, size: 20),
               ),
-              color: const Color(0xFF1E293B),
+              color: AppColors.surfaceHighlight,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               onSelected: (val) => setState(() => _sortMode = val),
               itemBuilder: (_) => [
@@ -468,22 +547,33 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
               ],
             ),
             const SizedBox(width: 6),
-            // Grid/List toggle
+            // ── Grid/List toggle with animated flip ──
             GestureDetector(
               onTap: () => setState(() => _isGridView = !_isGridView),
-              child: Container(
-                padding: const EdgeInsets.all(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: _isGridView
+                      ? AppColors.primary.withValues(alpha: 0.18)
+                      : AppColors.surfaceElevated,
                   borderRadius: BorderRadius.circular(14),
-                  
+                  border: Border.all(
+                    color: _isGridView ? AppColors.primary.withValues(alpha: 0.5) : AppColors.border,
+                    width: 1,
+                  ),
                 ),
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
+                  duration: const Duration(milliseconds: 280),
+                  transitionBuilder: (child, animation) => ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  ),
                   child: Icon(
-                    _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                    _isGridView ? Icons.grid_view_rounded : Icons.view_list_rounded,
                     key: ValueKey(_isGridView),
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: _isGridView ? AppColors.primary : AppColors.onSurfaceMuted,
                     size: 20,
                   ),
                 ),
@@ -492,9 +582,9 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
           ],
         ),
         const SizedBox(height: 12),
-        // Filter chips
+        // ── Filter chips ──
         SizedBox(
-          height: 36,
+          height: 38,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -502,29 +592,47 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
             itemBuilder: (context, index) {
               final f = filters[index];
               final isActive = _activeFilter == f.label;
+              final chipColor = chipColors[f.label] ?? AppColors.primary;
               return GestureDetector(
                 onTap: () => setState(() => _activeFilter = f.label),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
                   decoration: BoxDecoration(
-                    color: isActive ? AppTheme.primaryGreen.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+                    color: isActive ? chipColor.withValues(alpha: 0.18) : AppColors.surfaceElevated,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isActive ? AppTheme.primaryGreen.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.1),
+                      color: isActive ? chipColor.withValues(alpha: 0.65) : AppColors.border,
+                      width: isActive ? 1.5 : 1,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (f.icon != null) ...[
-                        Icon(f.icon, size: 14, color: isActive ? AppTheme.primaryGreen : Colors.white.withValues(alpha: 0.5)),
+                      if (isActive) ...[
+                        // Active colored dot indicator
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: chipColor,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ] else if (f.icon != null) ...[
+                        Icon(f.icon, size: 13, color: AppColors.onSurfaceMuted),
                         const SizedBox(width: 5),
                       ],
-                      Text(f.label, style: TextStyle(
-                        fontSize: 12, fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                        color: isActive ? AppTheme.primaryGreen : Colors.white.withValues(alpha: 0.6),
-                      )),
+                      Text(
+                        f.label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                          color: isActive ? chipColor : AppColors.onSurfaceMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1700,53 +1808,157 @@ class _MyGardenScreenState extends State<MyGardenScreen> with TickerProviderStat
 
   // ── Empty State ──────────────────────────────────────────
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.yard_rounded, size: 100, color: AppTheme.primaryGreen.withValues(alpha: 0.4))
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.05, 1.05), duration: 2000.ms, curve: Curves.easeInOut),
-            const SizedBox(height: 24),
-            Text(
-              'Your Garden Awaits',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),
-            ).animate().fade(duration: 600.ms, delay: 200.ms).slideY(begin: 0.2, end: 0, duration: 600.ms, delay: 200.ms),
-            const SizedBox(height: 12),
-            Text(
-              'Add your first plant and start tracking\nits growth, watering, and health.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.5), height: 1.5),
-            ).animate().fade(duration: 600.ms, delay: 400.ms),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: 220,
-              child: ElevatedButton.icon(
-                onPressed: () => showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  useSafeArea: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => AddPlantSheet(
-                    provider: Provider.of<GardenProvider>(context, listen: false),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hPad = constraints.maxWidth < 360 ? 24.0 : (constraints.maxWidth < 428 ? 32.0 : 48.0);
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.background,
+                Color(0xFF152118), // slightly warmer dark green tint
+                AppColors.backgroundLight,
+              ],
+              stops: [0.0, 0.5, 1.0],
+            ),
+          ),
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPad),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon in a soft green circle
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.10),
+                          blurRadius: 32,
+                          spreadRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.yard_rounded, size: 48, color: AppColors.primary),
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(0.93, 0.93),
+                    end: const Offset(1.04, 1.04),
+                    duration: 2200.ms,
+                    curve: Curves.easeInOut,
                   ),
-                ),
-                icon: const Icon(Icons.add_rounded, size: 22),
-                label: const Text('Plant Your First Seed 🌱', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                  elevation: 6,
-                ),
+                  const SizedBox(height: 28),
+                  // Bold heading
+                  Text(
+                    'Your Garden Awaits',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ).animate().fade(duration: 600.ms, delay: 200.ms)
+                    .slideY(begin: 0.2, end: 0, duration: 600.ms, delay: 200.ms),
+                  const SizedBox(height: 12),
+                  // Subtitle
+                  Text(
+                    'Add your first plant and start tracking\nits growth, watering, and health.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.onSurfaceMuted,
+                      height: 1.6,
+                    ),
+                  ).animate().fade(duration: 600.ms, delay: 350.ms),
+                  const SizedBox(height: 36),
+                  // CTA button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        useSafeArea: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => AddPlantSheet(
+                          provider: Provider.of<GardenProvider>(context, listen: false),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add_rounded, size: 22),
+                      label: const Text(
+                        'Add Your First Plant',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(54),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                        elevation: 8,
+                        shadowColor: AppColors.primary.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ).animate().fade(duration: 600.ms, delay: 550.ms)
+                    .scale(begin: const Offset(0.88, 0.88), end: const Offset(1, 1), duration: 600.ms, delay: 550.ms),
+                ],
               ),
-            ).animate().fade(duration: 600.ms, delay: 600.ms).scale(begin: const Offset(0.85, 0.85), end: const Offset(1, 1), duration: 600.ms, delay: 600.ms),
-          ],
-        ),
-      ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Filter Empty State (plants exist, but filter returns none) ──
+  Widget _buildFilterEmptyState() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.surfaceElevated,
+            border: Border.all(color: AppColors.border, width: 1),
+          ),
+          child: Icon(Icons.search_off_rounded, size: 34, color: AppColors.onSurfaceFaint),
+        )
+        .animate().fade(duration: 400.ms).scale(begin: const Offset(0.7, 0.7), end: const Offset(1, 1), duration: 400.ms, curve: Curves.easeOut),
+        const SizedBox(height: 16),
+        Text(
+          'No matches found',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.onSurface,
+          ),
+        ).animate().fade(duration: 400.ms, delay: 100.ms),
+        const SizedBox(height: 6),
+        Text(
+          'Try a different filter or clear your search.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.onSurfaceMuted,
+            height: 1.5,
+          ),
+        ).animate().fade(duration: 400.ms, delay: 180.ms),
+      ],
     );
   }
 

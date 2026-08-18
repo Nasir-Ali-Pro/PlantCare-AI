@@ -567,6 +567,7 @@ class _ForumScreenState extends State<ForumScreen> {
                     const SnackBar(
                       content: Text('Post reported. Our team will review it shortly.'),
                       backgroundColor: Color(0xFF22C55E),
+                        behavior: SnackBarBehavior.floating,
                     ),
                   );
                 }
@@ -961,6 +962,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                     const SnackBar(
                                       content: Text('Post updated successfully ✏️'),
                                       backgroundColor: AppTheme.primaryGreen,
+                                        behavior: SnackBarBehavior.floating,
                                     ),
                                   );
                                 }
@@ -1019,6 +1021,7 @@ class _ForumScreenState extends State<ForumScreen> {
                   const SnackBar(
                     content: Text('Post deleted.'),
                     backgroundColor: Color(0xFFEF4444),
+                      behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
@@ -1548,6 +1551,7 @@ class _ForumScreenState extends State<ForumScreen> {
                               const SnackBar(
                                 content: Text('Post published to Community Forum! 📣'),
                                 backgroundColor: AppTheme.primaryGreen,
+                                  behavior: SnackBarBehavior.floating,
                               ),
                             );
                           }
@@ -1561,6 +1565,7 @@ class _ForumScreenState extends State<ForumScreen> {
                             SnackBar(
                               content: Text(AppErrorUtils.getUserFriendlyMessage(e, defaultPrefix: 'Failed to publish post')),
                               backgroundColor: AppTheme.dangerRed,
+                                behavior: SnackBarBehavior.floating,
                             ),
                           );
                         } finally {

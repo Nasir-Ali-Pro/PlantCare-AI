@@ -26,10 +26,13 @@ class MainNavigationShell extends StatefulWidget {
   State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class _MainNavigationShellState extends State<MainNavigationShell>
+    with TickerProviderStateMixin {
   late int _currentIndex;
   bool _isLoading = true;
   bool _isOnboardingCompleted = false;
+
+  late AnimationController _pillController;
 
   final List<Widget> _tabs = const [
     HomeScreen(),
@@ -40,24 +43,60 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     ProfileScreen(),
   ];
 
+  static const _navItems = [
+    _NavItem(Icons.eco_rounded, Icons.eco_outlined, 'Scan'),
+    _NavItem(Icons.yard_rounded, Icons.yard_outlined, 'Garden'),
+    _NavItem(Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'AI Care'),
+    _NavItem(Icons.menu_book_rounded, Icons.menu_book_outlined, 'Explore'),
+    _NavItem(Icons.shopping_bag_rounded, Icons.shopping_bag_outlined, 'Shop'),
+    _NavItem(Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+  ];
+
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _checkOnboarding();
+    _pillController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _pillController.forward();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final diagnosisProvider = Provider.of<DiagnosisProvider>(context, listen: false);
+      final diagnosisProvider =
+          Provider.of<DiagnosisProvider>(context, listen: false);
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
       chatProvider.init(diagnosisProvider.geminiApiKey);
     });
   }
 
+  @override
+  void dispose() {
+    _pillController.dispose();
+    super.dispose();
+  }
+
   Future<void> _checkOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _isOnboardingCompleted = prefs.getBool('pref_onboarding_completed') ?? false;
+      _isOnboardingCompleted =
+          prefs.getBool('pref_onboarding_completed') ?? false;
       _isLoading = false;
     });
+  }
+
+  void _onTabTap(int index) {
+    if (_currentIndex == index) return;
+    setState(() => _currentIndex = index);
+    _pillController.reset();
+    _pillController.forward();
+
+    if (index == 2) {
+      final diagnosisProvider =
+          Provider.of<DiagnosisProvider>(context, listen: false);
+      Provider.of<ChatProvider>(context, listen: false)
+          .init(diagnosisProvider.geminiApiKey);
+    }
   }
 
   @override
@@ -76,11 +115,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         if (!gardenProvider.isLoggedIn && !gardenProvider.isGuest) {
           return AuthScreen(
             onAuthenticated: () {
-              // Fetch central key on login/auth
-              final diagnosisProvider = Provider.of<DiagnosisProvider>(context, listen: false);
+              final diagnosisProvider =
+                  Provider.of<DiagnosisProvider>(context, listen: false);
               diagnosisProvider.fetchCentralApiKey().then((_) {
                 if (!context.mounted) return;
-                final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+                final chatProvider =
+                    Provider.of<ChatProvider>(context, listen: false);
                 chatProvider.init(diagnosisProvider.geminiApiKey);
               });
               _checkOnboarding();
@@ -91,9 +131,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         if (!_isOnboardingCompleted) {
           return OnboardingScreen(
             onCompleted: () {
-              setState(() {
-                _isOnboardingCompleted = true;
-              });
+              setState(() => _isOnboardingCompleted = true);
             },
           );
         }
@@ -111,99 +149,112 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ),
             ],
           ),
-          bottomNavigationBar: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 12.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: AppColors.borderLight.withValues(alpha: 0.35),
-                          width: 1.5,
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildNavItem(0, Icons.eco_rounded, Icons.eco_outlined, 'Scan'),
-                          _buildNavItem(1, Icons.yard_rounded, Icons.yard_outlined, 'Garden'),
-                          _buildNavItem(2, Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'AI Care'),
-                          _buildNavItem(3, Icons.menu_book_rounded, Icons.menu_book_outlined, 'Explore'),
-                          Consumer<ShopProvider>(
-                            builder: (_, shopProvider, __) => _buildNavItem(
-                              4,
-                              Icons.shopping_bag_rounded,
-                              Icons.shopping_bag_outlined,
-                              'Shop',
-                              badgeCount: shopProvider.wishlist.length,
-                            ),
-                          ),
-                          _buildNavItem(5, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          bottomNavigationBar: _buildNavBar(context),
         );
       },
     );
   }
 
+  Widget _buildNavBar(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: AppColors.borderLight.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (int i = 0; i < _navItems.length; i++)
+                      if (i == 4)
+                        Consumer<ShopProvider>(
+                          builder: (_, shopProvider, __) => _buildNavItem(
+                            i,
+                            _navItems[i],
+                            badgeCount: shopProvider.wishlist.length,
+                          ),
+                        )
+                      else
+                        _buildNavItem(i, _navItems[i]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildNavItem(
     int index,
-    IconData filledIcon,
-    IconData outlinedIcon,
-    String label, {
+    _NavItem item, {
     int badgeCount = 0,
   }) {
     final isSelected = _currentIndex == index;
 
     return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _currentIndex = index;
-          });
-
-          if (index == 2) {
-            final diagnosisProvider = Provider.of<DiagnosisProvider>(context, listen: false);
-            Provider.of<ChatProvider>(context, listen: false).init(diagnosisProvider.geminiApiKey);
-          }
-        },
-        borderRadius: BorderRadius.circular(100),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+      child: GestureDetector(
+        onTap: () => _onTabTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          decoration: isSelected
+              ? BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.22),
+                    width: 1,
+                  ),
+                )
+              : null,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon with optional badge overlay
+              // Icon with badge
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Icon(
-                    isSelected ? filledIcon : outlinedIcon,
-                    color: isSelected ? AppColors.primary : AppColors.onSurfaceFaint,
-                    size: 24,
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    transitionBuilder: (child, animation) => ScaleTransition(
+                      scale: animation,
+                      child: FadeTransition(opacity: animation, child: child),
+                    ),
+                    child: Icon(
+                      isSelected ? item.filledIcon : item.outlinedIcon,
+                      key: ValueKey<bool>(isSelected),
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.onSurfaceFaint,
+                      size: 22,
+                    ),
                   ),
                   if (badgeCount > 0)
                     Positioned(
@@ -217,14 +268,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                           vertical: 2.0,
                         ),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.danger,
-                              AppColors.danger.withValues(alpha: 0.85),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: AppColors.danger,
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
@@ -248,23 +292,17 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 ],
               ),
               const SizedBox(height: 4),
-              if (isSelected)
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              const SizedBox(height: 2),
-              Text(
-                label,
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 250),
                 style: TextStyle(
-                  color: isSelected ? AppColors.onSurface : AppColors.onSurfaceFaint,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.onSurfaceFaint,
                   fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: isSelected ? 0.1 : 0,
                 ),
+                child: Text(item.label),
               ),
             ],
           ),
@@ -272,4 +310,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
     );
   }
+}
+
+class _NavItem {
+  final IconData filledIcon;
+  final IconData outlinedIcon;
+  final String label;
+  const _NavItem(this.filledIcon, this.outlinedIcon, this.label);
 }

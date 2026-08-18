@@ -69,16 +69,16 @@ class PlantListCard extends StatelessWidget {
       margin: const EdgeInsets.only(right: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
+        border: Border.all(color: color.withValues(alpha: 0.28), width: 0.8),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 9.5,
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.8,
+          letterSpacing: 0.6,
           color: color,
         ),
       ),
@@ -88,14 +88,14 @@ class PlantListCard extends StatelessWidget {
   Widget _buildActionButton(IconData icon, String label, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 13, color: color),
-            const SizedBox(width: 3),
+            const SizedBox(width: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -103,8 +103,8 @@ class PlantListCard extends StatelessWidget {
                 maxLines: 1,
                 style: TextStyle(
                   fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white.withValues(alpha: 0.75),
+                  fontWeight: FontWeight.w700,
+                  color: color.withValues(alpha: 0.85),
                 ),
               ),
             ),
@@ -242,9 +242,10 @@ class PlantListCard extends StatelessWidget {
                     provider.waterPlant(plant.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${plant.nickname} has been watered.'),
+                        content: Text('💧 ${plant.nickname} watered!'),
                         backgroundColor: AppColors.primary,
-                        duration: const Duration(seconds: 1),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   }),
@@ -252,35 +253,36 @@ class PlantListCard extends StatelessWidget {
                     provider.fertilizePlant(plant.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${plant.nickname} has been fertilized.'),
+                        content: Text('🧪 ${plant.nickname} fertilized!'),
                         backgroundColor: AppColors.primary,
-                        duration: const Duration(seconds: 1),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   }),
                   _buildActionButton(
                     plant.notificationsEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
-                    plant.notificationsEnabled ? 'Alerts' : 'Muted',
+                    plant.notificationsEnabled ? 'Alerts On' : 'Muted',
                     plant.notificationsEnabled ? AppTheme.primaryGreen : Colors.white.withValues(alpha: 0.35),
                     () {
-                      // Capture the NEW state (opposite of current) before toggling
                       final willEnable = !plant.notificationsEnabled;
                       provider.togglePlantNotifications(plant.id);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
                             willEnable
-                                ? 'Reminders enabled for ${plant.nickname}'
-                                : 'Reminders muted for ${plant.nickname}',
+                                ? '🔔 Reminders enabled for ${plant.nickname}'
+                                : '🔕 Reminders muted for ${plant.nickname}',
                           ),
                           backgroundColor: AppColors.primary,
-                          duration: const Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 2),
                         ),
                       );
                     },
                   ),
                   _buildActionButton(Icons.menu_book_rounded, 'Journal', const Color(0xFFA78BFA), onAddJournal),
-                  _buildActionButton(Icons.delete_outline_rounded, 'Delete', Colors.white.withValues(alpha: 0.35), onDelete),
+                  _buildActionButton(Icons.delete_outline_rounded, 'Delete', AppColors.dangerLight, onDelete),
                 ],
               ),
             ),

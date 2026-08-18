@@ -756,7 +756,10 @@ class ResultScreen extends StatelessWidget {
                         final parentMessenger = ScaffoldMessenger.of(context);
                         if (nickname.isEmpty) {
                           parentMessenger.showSnackBar(
-                            const SnackBar(content: Text('Please enter a nickname!')),
+                            const SnackBar(
+                              content: Text('Please enter a nickname!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
                           );
                           return;
                         }
@@ -778,6 +781,7 @@ class ResultScreen extends StatelessWidget {
                             SnackBar(
                               content: Text('Added $nickname to garden! 🌱'),
                               backgroundColor: AppColors.primary,
+                              behavior: SnackBarBehavior.floating,
                             ),
                           );
                         }

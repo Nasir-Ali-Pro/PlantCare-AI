@@ -119,16 +119,17 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             tooltip: 'Clear chat',
+            icon: const Icon(Icons.cleaning_services_rounded, color: AppColors.onSurfaceMuted),
             onPressed: () {
               Provider.of<ChatProvider>(context, listen: false).clearChat();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Conversation cleared!'),
                   backgroundColor: AppColors.surfaceElevated,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             },
-            icon: const Icon(Icons.cleaning_services_rounded, color: AppColors.onSurfaceMuted),
           ),
         ],
       ),
@@ -194,30 +195,46 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: chatProvider.messages.isEmpty
                       ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.eco_rounded, size: 56, color: AppColors.primary.withValues(alpha: 0.3)),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Start a conversation',
-                                style: TextStyle(
-                                  color: AppColors.onSurfaceMuted,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.primary.withValues(alpha: 0.10),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(alpha: 0.2),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: const Icon(Icons.eco_rounded, size: 38, color: AppColors.primary),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Ask me anything about plant care, diseases,\nwatering schedules, or soil health.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: AppColors.onSurfaceFaint,
-                                  fontSize: 13,
-                                  height: 1.5,
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'Ask PlantCare AI',
+                                  style: TextStyle(
+                                    color: AppColors.onSurface,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Get expert advice on plant care, diseases, watering schedules, and more.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppColors.onSurfaceFaint,
+                                    fontSize: 13,
+                                    height: 1.55,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         )
                       : ListView.builder(
@@ -280,7 +297,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 // Quick Prompt Chips
                 if (chatProvider.messages.length <= 1 && !chatProvider.isTyping) ...[
                   SizedBox(
-                    height: 40,
+                    height: 44,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -291,21 +308,28 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.only(right: 8.0),
                           child: ActionChip(
                             label: Text(
-                              prompt,
-                              style: const TextStyle(color: AppColors.onSurface, fontSize: 11.5),
+                              '🌿 $prompt',
+                              style: const TextStyle(
+                                color: AppColors.onSurface,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: AppColors.surfaceElevated,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(100),
-                              side: const BorderSide(color: AppColors.border),
+                              side: BorderSide(
+                                color: AppColors.primary.withValues(alpha: 0.25),
+                              ),
                             ),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                             onPressed: () => _sendMessage(prompt, chatProvider, gardenProvider),
                           ),
                         );
                       },
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                 ],
 
                 // Message Input Box
@@ -350,9 +374,20 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       const SizedBox(width: 10),
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.primary,
+                          gradient: const LinearGradient(
+                            colors: [AppColors.primary, AppColors.primaryDark],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
@@ -650,6 +685,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               backgroundColor: AppColors.primary,
                               duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
                             ),
                           );
                         },

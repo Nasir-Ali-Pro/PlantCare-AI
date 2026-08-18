@@ -234,6 +234,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           SnackBar(
             content: Text('Deleted report for ${report.diseaseName}'),
             backgroundColor: AppColors.surfaceElevated,
+            behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
               label: 'Undo',
               textColor: AppColors.primary,

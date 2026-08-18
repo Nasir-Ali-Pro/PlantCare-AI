@@ -76,6 +76,7 @@ class _AuthScreenState extends State<AuthScreen> {
             content: Text('Account created! Please check your email to verify your address, $displayName.'),
             backgroundColor: AppColors.primary,
             duration: const Duration(seconds: 5),
+              behavior: SnackBarBehavior.floating,
           ),
         );
       } else {
@@ -89,6 +90,7 @@ class _AuthScreenState extends State<AuthScreen> {
           const SnackBar(
             content: Text('Signed in successfully.'),
             backgroundColor: AppColors.primary,
+              behavior: SnackBarBehavior.floating,
           ),
         );
         widget.onAuthenticated();
@@ -125,6 +127,7 @@ class _AuthScreenState extends State<AuthScreen> {
       const SnackBar(
         content: Text('Continuing as guest. Some features are limited.'),
         backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
       ),
     );
 

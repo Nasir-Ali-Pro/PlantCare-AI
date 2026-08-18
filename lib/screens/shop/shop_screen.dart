@@ -283,9 +283,23 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Affiliate Shop 🛒'),
-        elevation: 0,
         backgroundColor: AppColors.background,
+        elevation: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.15),
+              ),
+              child: const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 18),
+            ),
+            const SizedBox(width: 10),
+            const Text('Plant Supplies'),
+          ],
+        ),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.primary,
@@ -684,6 +698,32 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                         ],
                       ),
                     ],
+                  ),
+                   const SizedBox(height: 8),
+
+                  // View Deal CTA
+                  Container(
+                    width: double.infinity,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, AppColors.primaryDark],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'View Deal',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
